@@ -6,11 +6,15 @@
 			
 			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
 			<link rel="stylesheet" href="css/style.css">
+			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+			
 
 </head>
 
 <body>
 <!-- partial:index.partial.html -->
+<a id="button"></a>
+
 <div class="panel" data-color="gray">
    
 	<div>
@@ -19,7 +23,7 @@
       <p>As of 2/11/2021 this is a work in progress. Expected completion 2/19/2021</p>    
       <p>This page will show off some of the projects I have completed in my career</p>
       <p>This does not include all my work, but is a highlight of some of my favorite projects</p>
-      <p>If you have any questions please reach out! <a href="https://www.linkedin.com/in/austin-l-jackson/">LinkedIn</a>.</p>
+      <p>If you have an idea or any questions please reach out below! I am willing to take on side projects!</p>
 		<a href="https://www.linkedin.com/in/austin-l-jackson/">
   <img  src="images/linkedin.png" alt="LinkedIn" width="190" height="190">
   </a>
@@ -36,22 +40,40 @@
 <div class="panel" data-color="violet">
 	<div>
 	  <h2>Programming Languages</h2>
-		<ul>
+	  
+	  <div class="row">
+		  <div class="column">
+		  <ul>
 			<p>Python</p>
 			<p>Java</p>
 			<p>Javascript</p>
-			<p>Perl</p>
+			<p>C#</p>
+			</ul>
+		  </div>
+		  <div class="column">
+		  <ul>
+		  <p>Perl</p>
 			<p>SQL</p>
 			<p>HTML</p>
-			<p>CSS</p>	
-		</ul>
+			<p>CSS</p>
+			</ul>			
+		  </div>
+	  </div>
+		
+			
+		
   </div>
 </div>
 <div class="panel" data-color="indigo">
   <div>
-  <h2>Python Automation</h2>
+  <h1>Python Automation</h1>
+  
+  <br>
+  <br>
+  <br>
+  
   <div>
-  <h3>Project Monolith</h3>
+  <h3><u>Project Monolith</u></h3>
   <p>Project Monolith was a tool written by me to automate several processes. We did not have access to the Airwatch API, so I wrote a webscraping tool that could imitate it.</p>
   <h3>Use Cases</h3>
   <p>A report of devices with old versions of applications was sent out daily, this tool could be given a specific application to redownload and attempt to fix them. It would send out a report when finished.</p>
@@ -70,6 +92,29 @@
   <source src="videos/Monolith.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
+
+<br>
+  
+  <br>
+
+<h3><u>Folder Comparison Tool</u></h3>
+<p>The folder comparison tool was really ground breaking for the company. It led to a 99.99% decrease in time spent on a task allowing engineers to focus on other tasks.</p>
+<p>Before, our engineers got a folder of XML files and each one represented a profile. Whenever a change was made in the field, they had to compare the master folder of XML files to the proposed XML files. They used to do this by hand and review 60,000+ lines of code manually. I quickly realized this was a very bad approach and created a tool to solve the issue.</p>
+<p>My tool reduced the time spent from 3 weeks to 3 minutes and allowed for greater accuracy of results.</p>
+<h3>Use Cases</h3>
+<p>Compares two folders for differences in files and generates a report on files that are not identical. Only works on text and XML files.</p>
+<h3>Libraries Used</h3>
+<p>difflib (generate the report)</p>
+<p>os (retrieve the path to folders)</p>
+<p>sys (read and write to files)</p>
+<p>tkinter (ask user what folders to compare)</p>
+<p>webbrowser (open up the webbrowser and display the report)</p>
+<h3>Screenshots</h3>
+<img  src="images/comparedashboard.png" alt="PowerBi Dashboard" width="540" height="360">
+<br>
+<img  src="images/diffreport.png" alt="PowerBi Dashboard" width="540" height="360">
+
+
   </div>
   </div>
 </div>
@@ -88,8 +133,8 @@
 <div class="panel" data-color="red">
 	<div>
   <h2>Data Analysis</h2>
-  <img  src="images/PowerBi1.PNG" alt="PowerBi Dashboard" width="540" height="360">
-  <img  src="images/PowerBi2.PNG" alt="PowerBi Dashboard" width="540" height="360">
+  <img  src="images/PowerBi1.png" alt="PowerBi Dashboard" width="540" height="360">
+  <img  src="images/PowerBi2.png" alt="PowerBi Dashboard" width="540" height="360">
   </div>
 </div>
 <!-- partial -->
