@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>CSS Template</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the header */
+.header {
+  background-color: #f1f1f1;
+  padding: 30px;
+  text-align: center;
+  font-size: 35px;
+  border-radius: 25px; /* Rounded corners */
+}
+
+/* Container for flexboxes */
+.row {
+  display: -webkit-flex;
+  display: flex;
+}
+
+/* Create three equal columns that sits next to each other */
+.column {
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  padding: 30px;
+  text: center;
+  margin: 10px;
+  height: auto; /* Should be removed. Only for demonstration */
+  width: auto;
+  border-radius: 25px; /* Rounded corners */
+  text-align: center;
+}
+
+/* Style the footer */
+.footer {
+  border-radius: 25px; /* Rounded corners */
+  background-color: #f1f1f1;
+  padding: 10px;
+  text-align: center;
+}
+
+.rounded-corners{
+    border-radius: 15px; /* Rounded corners */
+    margin: 10px;
+}
+
+/* #thefile {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+}
+
+#canvas {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#audio {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  width: calc(100% - 20px);
+  height: 320px;
+} */
+
+/* Responsive layout - makes the three columns stack on top of each other instead of next to each other */
+@media (max-width: 600px) {
+  .row {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+<body>
+
+<div>
+  <div class="row">
+      <div class="column" style="background-color:#aaa;">
+        <div>
+            <h3><a href="./About.html">About</a></h3>
+        </div>
+      </div>
+
+      <div class="column" style="background-color:#bbb;">
+        <div>
+          <h3><a href="./Index.html">Home</a></h3>
+        </div>
+      </div>
+
+      <div class="column" style="background-color:#ccc;">
+        <div>
+          <h3><a href="./Projects.html">Projects</a></h3>
+        </div>
+      </div>
+</div>
+</div>
+
+<div class="row rounded-corners" style="background-color:#bbb;">
+
+    <div id="main-panel" class="column">
+        <div id="content">
+            <input type="file" id="thefile" accept="audio/*" />
+            <canvas class="rounded-corners"  id="canvas"></canvas>
+            <audio id="audio" controls></audio>
+          </div>
+    </div>
+
+
+    
+    
+
+     <iframe class="column rounded-corners" src="https://www.youtube.com/embed/ctfH4cR3sFA?si=yB7Y9hdGH8o1kedG?rel=0&modestbranding=1&autohide=1&mute=1&showinfo=1&controls=1&autoplay=1"  frameborder="0" allowfullscreen></iframe>
+
+    
+
+
+</div>
+
+<div class="row rounded-corners" style="background-color:#ebe9e9;">
+  <div class="column"> 
+    <h1>Speech synthesiser</h1>
+
+    <p>
+      Enter some text in the input below and press return or the "play" button
+      to hear it. change voices using the dropdown menu.
+    </p>
+  
+    <form>
+      <label for="txt">Enter text</label>
+      <input id="txt" type="text" class="txt" />
+      <div>
+        <label for="rate">Rate</label
+        ><input type="range" min="0.5" max="2" value="1" step="0.1" id="rate" />
+        <div class="rate-value">1</div>
+        <div class="clearfix"></div>
+      </div>
+      <div>
+        <label for="pitch">Pitch</label
+        ><input type="range" min="0" max="2" value="1" step="0.1" id="pitch" />
+        <div class="pitch-value">1</div>
+        <div class="clearfix"></div>
+      </div>
+      <select></select>
+      <div class="controls">
+        <button id="play" type="submit">Play</button>
+      </div>
+    </form>  
+
+  </div>
+  
+
+  <div class="column"></div>
+</div>
+
+
+<div class="footer">
+  <p>Footer</p>
+</div>
+
+</body>
+
+<script>
+
+window.onload = function() {
+  
+  var file = document.getElementById("thefile");
+  var audio = document.getElementById("audio");
+  
+  file.onchange = function() {
+    var files = this.files;
+    audio.src = URL.createObjectURL(files[0]);
+    audio.load();
+    audio.play();
+    var context = new AudioContext();
+    var src = context.createMediaElementSource(audio);
+    var analyser = context.createAnalyser();
+
+    var mainPanel = document.getElementById("main-panel");
+
+    var canvas = document.getElementById("canvas");
+    canvas.width = mainPanel.offsetWidth;
+    canvas.height = mainPanel.offsetHeight;
+    var ctx = canvas.getContext("2d");
+
+    src.connect(analyser);
+    analyser.connect(context.destination);
+
+    analyser.fftSize = 256;
+
+    var bufferLength = analyser.frequencyBinCount;
+    console.log(bufferLength);
+    console.log(canvas.width);
+    console.log(canvas.height);
+
+    var dataArray = new Uint8Array(bufferLength);
+
+    var WIDTH = mainPanel.offsetWidth;;
+    var HEIGHT = mainPanel.offsetHeight;
+
+    var barWidth = (WIDTH / bufferLength) * 2.5;
+    var barHeight;
+    var x = 0;
+
+    function randomIntFromInterval(min, max) { // min and max included 
+      return Math.floor(Math.random() * (max - min + 1) + min)
+    }
+
+    function renderFrame() {
+      requestAnimationFrame(renderFrame);
+
+      x = 0;
+
+      analyser.getByteFrequencyData(dataArray);
+
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      for (var i = 0; i < bufferLength; i++) {
+        barHeight = dataArray[i];
+        
+        var r = randomIntFromInterval(0,120);
+        var g = randomIntFromInterval(120,200);
+        var b = randomIntFromInterval(200,255);
+
+        ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
+        ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+
+        x += barWidth + 1;
+      }
+    }
+
+    audio.play();
+    renderFrame();
+  };
+};
+
+document.addEventListener("DOMContentLoaded", function(event) {
+
+
+
+  //do work
+
+  
+  var mainPanel = document.getElementById("main-panel");
+  var request = fetchAsync("https://picsum.photos/200/300").then(
+function(value) { 
+    // var url = value.url;
+    // mainPanel.style.backgroundImage = `url(${url})`;
+},
+function(error) { 
+    /* code if some error */
+    console.log('error' + error.toString())
+}
+);;
+
+
+
+
+
+ 
+ 
+});
+
+async function fetchAsync (url) {
+  let response = await fetch(url);
+  let data = await response
+  return data;
+}
+</script>
+
+<script src="script.js"></script>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7257827927320579"
+     crossorigin="anonymous"></script>
+</html>

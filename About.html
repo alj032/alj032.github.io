@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>CSS Template</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the header */
+.header {
+  background-color: #f1f1f1;
+  padding: 30px;
+  text-align: center;
+  font-size: 35px;
+  border-radius: 25px; /* Rounded corners */
+}
+
+/* Container for flexboxes */
+.row {
+  display: -webkit-flex;
+  display: flex;
+}
+
+/* Create three equal columns that sits next to each other */
+.column {
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  padding: 30px;
+  text: center;
+  margin: 10px;
+  height: auto; /* Should be removed. Only for demonstration */
+  width: auto;
+  border-radius: 25px; /* Rounded corners */
+  text-align: center;
+}
+
+/* Style the footer */
+.footer {
+  border-radius: 25px; /* Rounded corners */
+  background-color: #f1f1f1;
+  padding: 10px;
+  text-align: center;
+}
+
+.rounded-corners{
+    border-radius: 25px; /* Rounded corners */
+}
+
+/* #thefile {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+}
+
+#canvas {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#audio {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  width: calc(100% - 20px);
+  height: 320px;
+} */
+
+/* Responsive layout - makes the three columns stack on top of each other instead of next to each other */
+@media (max-width: 600px) {
+  .row {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+<body>
+
+<div>
+  <div class="row">
+    <div class="column" style="background-color:#aaa;">
+      <div>
+          <h3><a href="./About.html">About</a></h3>
+      </div>
+    </div>
+
+    <div class="column" style="background-color:#bbb;">
+      <div>
+        <h3><a href="./Index.html">Home</a></h3>
+      </div>
+    </div>
+
+    <div class="column" style="background-color:#ccc;">
+      <div>
+        <h3><a href="./Projects.html">Projects</a></h3>
+      </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="column">
+      <title>Austin's Portfolio</title>
+
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+			<link rel="stylesheet" href="css/style.css">
+			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+			<link rel="image_src" href="images/thumbnail.png" />
+
+      <a id="button"></a>
+
+<div class="panel" data-color="gray">
+
+	<div>
+      <h1>Welcome!</h1>    
+      <p>This page will show off some of the projects I have completed in my career</p>
+      <p>This does not include all my work, but is a highlight of some of my favorite projects</p>
+      <p>If you have an idea you want to create or any questions about my work please reach out below! I am willing to take on side projects!</p>
+		<a href="https://www.linkedin.com/in/austin-l-jackson/">
+  <img  src="images/linkedin.png" alt="LinkedIn" width="190" height="190">
+  </a>
+  <a href="https://github.com/alj032">	  
+  <img src="images/github.png" alt="Github" width="210" height="210">
+  </a>
+  </div>
+
+  <div class="selfie" id="myphoto">
+	  <img  src="images/austin.png" alt="" width="420" height="530">
+	  </div>
+
+</div>
+<div class="panel" data-color="violet">
+	<div>
+	  <h2>Programming Languages</h2>
+
+	  <div class="row">
+		  <div class="column">
+		  <ul>
+			<p>Python</p>
+			<p>Java</p>
+			<p>Javascript</p>
+			<p>C#</p>
+			</ul>
+		  </div>
+		  <div class="column">
+		  <ul>
+		  <p>Perl</p>
+			<p>SQL</p>
+			<p>HTML</p>
+			<p>CSS</p>
+			</ul>			
+		  </div>
+	  </div>
+
+
+
+  </div>
+</div>
+<div class="panel" data-color="indigo">
+  <div>
+  <h1>Python Automation</h1>
+
+  <br>
+  <br>
+  <br>
+
+  <div>
+  <h3><u>Project Monolith</u></h3>
+  <p>Project Monolith was a tool written by me to automate several processes. We did not have access to the Airwatch API, so I wrote a webscraping tool that could imitate it.</p>
+  <h3>Use Cases</h3>
+  <p>A report of devices with old versions of applications was sent out daily, this tool could be given a specific application to redownload and attempt to fix them. It would send out a report when finished.</p>
+  <p>It was estimated this tool could do the same amount of work as 7 full time employees.</p>
+  <h3>Libraries used</h3>
+  <ul text-align="Left">
+  <p>selenium (web scraping)</p>
+  <p>pandas (dataframes to organize web scraping)</p>
+  <p>paramiko (used to ssh into linux box and ping devices)</p>
+  <p>csv (used to generate the report)</p>
+  <p>win32 (send the report in outlook to necessary audience)</p>
+  <p>tkinter (asked for username and password upon startup)</p>
+  <p>time (timer to see how long the process took)</p>
+  </ul>
+
+	<iframe width="560" height="315" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<br>
+
+  <br>
+
+<h3><u>Folder Comparison Tool</u></h3>
+<p>The folder comparison tool was really ground breaking for the company. It led to a 99.99% decrease in time spent on a task allowing engineers to focus on other tasks.</p>
+<p>Before, our engineers got a folder of XML files and each one represented a profile. Whenever a change was made in the field, they had to compare the master folder of XML files to the proposed XML files. They used to do this by hand and review 60,000+ lines of code manually. I quickly realized this was a very bad approach and created a tool to solve the issue.</p>
+<p>My tool reduced the time spent from 3 weeks to 3 minutes and allowed for greater accuracy of results.</p>
+<h3>Use Cases</h3>
+<p>Compares two folders for differences in files and generates a report on files that are not identical. Only works on text and XML files.</p>
+<h3>Libraries Used</h3>
+<p>difflib (generate the report)</p>
+<p>os (retrieve the path to folders)</p>
+<p>sys (read and write to files)</p>
+<p>tkinter (ask user what folders to compare)</p>
+<p>webbrowser (open up the webbrowser and display the report)</p>
+<h3>Screenshots</h3>
+<img  src="images/comparedashboard.png" alt="PowerBi Dashboard" width="540" height="360">
+<br>
+<img  src="images/diffreport.png" alt="PowerBi Dashboard" width="540" height="360">
+
+
+  </div>
+  </div>
+</div>
+<div class="panel" data-color="blue">
+  <div>
+  <h2>Java Projects</h2>
+
+  <a href="https://github.com/alj032/temperature-to-color"> Temperature to RGB</a>
+  <p>Work In Progress, will update soon!</p>
+  </div>
+</div>
+<div class="panel" data-color="green">
+  <div>
+  <h2>Web Development</h2>
+  <p>I have worked on several websites in my career and love making them.</p>
+  <p>The one you are viewing now was made by me and is hosted on Github Pages for free.</p>
+
+  <a href="/resolution_code.html"> Resolution Code Website</a>
+
+  </div>
+</div>
+<div class="panel" data-color="yellow">
+  <div>
+	<h2>Machine Learning</h2>
+	<a href="https://github.com/alj032/basketball-machine-learning"> NCAA basketball predictions </a>
+  </div>
+</div>
+<section id="data_analysis">
+<div class="panel" data-color="orange">
+	<div>
+  <h2>Data Analysis and Visualization</h2>
+
+  <a href="https://uber-charting.herokuapp.com/"> NYC Uber Pickups by Hour</a>
+  <p>Made using Streamlit, numpy, pandas</p>
+  <img  src="images/PowerBi1.png" alt="PowerBi Dashboard" width="540" height="360">
+  <img  src="images/PowerBi2.png" alt="PowerBi Dashboard" width="540" height="360">
+  </div>
+</div>
+</section>
+<div class="panel" data-color="red">
+	<div>
+  <h2>Certificates</h2>
+  <a target="_blank" href="/images/SaSCert.jpg">
+  <img  src="images/SAS_logo_horiz.svg" alt="Sas Analytics" width="340" height="160">
+  </a>
+  <a target="_blank" href="/images/AWSDeveloper.PNG">
+  <img  src="images/Amazon_Web_Services_Logo.svg" alt="AWS for developers - LinkedIn" width="340" height="160">
+  </a>
+  <a target="_blank" href="/images/Jenkins.PNG">
+  <img  src="images/Jenkins_logo.svg" alt="Jenkins - LinkedIn" width="150" height="160">
+  </a>
+
+  <p>By Amazon.com Inc. - Amazon, <a href="http://www.apache.org/licenses/LICENSE-2.0" title="Apache License, Version 2.0">Apache License 2.0</a>, <a href="https://commons.wikimedia.org/w/index.php?curid=62382835">Link</a></p>
+  </div>
+</div>
+<!-- partial -->
+  <script src='https://code.jquery.com/jquery-2.2.4.min.js'></script><script  src="js/script.js"></script>
+    </div>
+
+</div>
+
+
+<div class="footer">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7257827927320579"
+     crossorigin="anonymous"></script>
+<!-- FirstFooterAd -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7257827927320579"
+     data-ad-slot="7393215411"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+
+</body>
+
+<script>
+
+window.onload = function() {
+  
+  var file = document.getElementById("thefile");
+  var audio = document.getElementById("audio");
+  
+  file.onchange = function() {
+    var files = this.files;
+    audio.src = URL.createObjectURL(files[0]);
+    audio.load();
+    audio.play();
+    var context = new AudioContext();
+    var src = context.createMediaElementSource(audio);
+    var analyser = context.createAnalyser();
+
+    var mainPanel = document.getElementById("main-panel");
+
+    var canvas = document.getElementById("canvas");
+    canvas.width = mainPanel.offsetWidth;
+    canvas.height = mainPanel.offsetHeight;
+    var ctx = canvas.getContext("2d");
+
+    src.connect(analyser);
+    analyser.connect(context.destination);
+
+    analyser.fftSize = 256;
+
+    var bufferLength = analyser.frequencyBinCount;
+    console.log(bufferLength);
+    console.log(canvas.width);
+    console.log(canvas.height);
+
+    var dataArray = new Uint8Array(bufferLength);
+
+    var WIDTH = mainPanel.offsetWidth;;
+    var HEIGHT = mainPanel.offsetHeight;
+
+    var barWidth = (WIDTH / bufferLength) * 2.5;
+    var barHeight;
+    var x = 0;
+
+    function renderFrame() {
+      requestAnimationFrame(renderFrame);
+
+      x = 0;
+
+      analyser.getByteFrequencyData(dataArray);
+
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      for (var i = 0; i < bufferLength; i++) {
+        barHeight = dataArray[i];
+        
+        var r = barHeight + (25 * (i/bufferLength));
+        var g = 250 * (i/bufferLength);
+        var b = 50;
+
+        ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
+        ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+
+        x += barWidth + 1;
+      }
+    }
+
+    audio.play();
+    renderFrame();
+  };
+};
+
+document.addEventListener("DOMContentLoaded", function(event) {
+
+
+
+  //do work
+
+  
+  var mainPanel = document.getElementById("main-panel");
+  var request = fetchAsync("https://picsum.photos/200/300").then(
+function(value) { 
+    // var url = value.url;
+    // mainPanel.style.backgroundImage = `url(${url})`;
+},
+function(error) { 
+    /* code if some error */
+    console.log('error' + error.toString())
+}
+);;
+
+
+
+
+
+ 
+ 
+});
+
+async function fetchAsync (url) {
+  let response = await fetch(url);
+  let data = await response
+  return data;
+}
+</script>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7257827927320579"
+     crossorigin="anonymous"></script>
+
+</html>
