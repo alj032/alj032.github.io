@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>CSS Template</title>
+<title>Projects</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
+.adsbygoogle { width: 320px; height: 100px; }
+@media(min-width: 500px) { .adsbygoogle { width: 468px; height: 60px; } }
+@media(min-width: 800px) { .adsbygoogle { width: 728px; height: 90px; } }
+
+
 * {
   box-sizing: border-box;
 }
@@ -166,30 +171,43 @@ body {
   
 
   <div class="column">
+    <div class="row">
+      <div class="column">
+        <button onclick="SetupGame()">Start Game</button>
+      </div>
+      <div class="column">
+        <button onclick="EndGame()">End Game</button>
+      </div>
+  </div>
+  <div class="row" id="game-container">
     <canvas id="myCanvas" width="480" height="320"></canvas>
-
   </div>
 </div>
+</div>
 
-
-<div class="footer">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7257827927320579"
-     crossorigin="anonymous"></script>
-<!-- FirstFooterAd -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-7257827927320579"
-     data-ad-slot="7393215411"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+<div class="footer adsense-inject row" style="height: 200px; width: auto;">
 </div>
 
 </body>
 
 <script>
+
+document.addEventListener("DOMContentLoaded", function() {
+    var adElements = document.querySelectorAll(".adsense-inject");
+
+    adElements.forEach(function(element) {
+        var insElement = document.createElement("ins");
+        insElement.className = "adsbygoogle";
+        insElement.style.display = "block";
+        insElement.setAttribute("data-ad-client", "ca-pub-7257827927320579");
+        insElement.setAttribute("data-ad-slot", "7393215411");
+        insElement.setAttribute("data-ad-format", "auto");
+
+        element.appendChild(insElement);
+
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+    });
+});
 
 window.onload = function() {
   
@@ -264,9 +282,16 @@ window.onload = function() {
   };
 };
 
+
 document.addEventListener("DOMContentLoaded", function(event) {
 
+  const textToSpeak = "Welcome to the page";
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            synth.speak(utterance);
 
+// Speak the utterance
+window.speechSynthesis.speak(utterance);
 
   //do work
 
@@ -301,10 +326,17 @@ async function fetchAsync (url) {
 <script src="script.js"></script>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7257827927320579"
-     crossorigin="anonymous"></script>
+crossorigin="anonymous"></script>
 
-     <script>
-      var canvas = document.getElementById("myCanvas");
+
+<script>
+function EndGame(){
+  var canvas = document.getElementById("game-container");
+  canvas.replaceChildren();
+}
+
+function SetupGame () {
+  var canvas = document.getElementById("myCanvas");
       var ctx = canvas.getContext("2d");
       var ballRadius = 10;
       var x = canvas.width/2;
@@ -469,5 +501,11 @@ async function fetchAsync (url) {
       }
   
       draw();
+}
+
+
   </script>
+  
+
+
 </html>
