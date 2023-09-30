@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@<version>/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@v0.157.0/examples/jsm/"
+      }
+    }
+  </script>
+
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7257827927320579"
   crossorigin="anonymous"></script>
 
@@ -133,15 +142,6 @@ body {
   <div id="info">
     <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - webgl particle billboards example
   </div>
-
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "../build/three.module.js",
-        "three/addons/": "./jsm/"
-      }
-    }
-  </script>
 
   <script type="module">
 
