@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <meta charset=utf-8 />
+  <title>Places Visited</title>
+
+  <link href='https://www.mapbox.com/base/latest/base.css' rel='stylesheet' />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
+   integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+   crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js"
+   integrity="sha512-tAGcCfR4Sc5ZP5ZoVz0quoZDYX5aCtEm/eu1KhSLj2c9eFrylXZknQYmxUssFaVJKvvc0dJQixhGjG2yXWiV9Q=="
+   crossorigin=""></script>
+
+  <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+</head>
+<body>
+  <div class='limiter'>
+    <div class='col12 pad4y'>
+      <h1>Places Visited</h1>
+      <p>A map of all the places I have visited.</p>
+      <div class='space-bottom'>
+        <div id='map' class='col12 row10'></div>
+      </div>
+      
+      <div class='space-bottom'>
+        <div id='table-container' class='col12 row10'></div>
+      </div>
+
+    </div>
+  </div>
+<script>
+  var map = L.map('map', {
+	fullscreenControl: true
+  }).setView([37.8, -96], 4);
+
+      // Define a red icon
+	  var redIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+        iconSize: [25, 41], // size of the icon
+        iconAnchor: [12, 41], // point of the icon which will correspond to marker's location
+        popupAnchor: [1, -34] // point from which the popup should open relative to the iconAnchor
+    });
+
+  // Check if Geolocation is supported
+  if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var latitude = position.coords.latitude;
+            var longitude = position.coords.longitude;
+
+            // Add a red marker to the map at the user's location
+            L.marker([latitude, longitude], {icon: redIcon}).addTo(map)
+                .bindPopup("You are here!")
+                .openPopup();
+
+
+            // Center the map on the user's location
+            map.setView([latitude, longitude], 13);
+        }, function(error) {
+            console.error("Error Code = " + error.code + " - " + error.message);
+        });
+    } else {
+        console.log("Geolocation is not supported by this browser.");
+    }
+
+  var locations = [
+    {"name": "Fayetteville, AR", "lat": 36.0822, "lng": -94.1719},
+    {"name": "Denver", "lat": 39.7392, "lng": -104.9903},
+    {"name": "San Diego", "lat": 32.7157, "lng": -117.1611},
+    {"name": "Fort Smith, AR", "lat": 35.3859, "lng": -94.3985},
+    {"name": "St. Louis", "lat": 38.6270, "lng": -90.1994},
+    {"name": "Kalispell, MT (near Glacier National Park)", "lat": 48.191989, "lng": -114.316813},
+    {"name": "Gulf Shores, AL", "lat": 30.2460, "lng": -87.7008},
+    {"name": "Edinburgh, UK", "lat": 55.9533, "lng": -3.1883},
+    {"name": "London, UK", "lat": 51.5074, "lng": -0.1278},
+    {"name": "Preston, UK", "lat": 53.7632, "lng": -2.7031},
+    {"name": "Dangriga, Belize", "lat": 16.9695, "lng": -88.232},
+    {"name": "Belize City, Belize", "lat": 17.5046, "lng": -88.1962},
+    {"name": "Belmopan, Belize", "lat": 17.2511, "lng": -88.7590},
+    {"name": "San Ignacio, Belize", "lat": 17.1561, "lng": -89.0719},
+    {"name": "Caye Caulker, Belize", "lat": 17.7612, "lng": -88.0277},
+	{"name": "Mobile, AL", "lat": 30.6954, "lng": -88.0399},
+    {"name": "Kansas City, MO", "lat": 39.0997, "lng": -94.5786},
+    {"name": "Tulsa, OK", "lat": 36.1539, "lng": -95.9928},
+    {"name": "Galveston, TX", "lat": 29.3013, "lng": -94.7977},
+    {"name": "Austin, TX", "lat": 30.2672, "lng": -97.7431},
+    {"name": "San Antonio, TX", "lat": 29.4241, "lng": -98.4936},
+    {"name": "Dallas, TX", "lat": 32.7767, "lng": -96.7970},
+    {"name": "Las Vegas, NV", "lat": 36.1699, "lng": -115.1398},
+    {"name": "Orlando, FL", "lat": 28.5383, "lng": -81.3792},
+    {"name": "Honolulu, HI", "lat": 21.3069, "lng": -157.8583}
+    // more locations...
+];
+
+locations.forEach(function(location) {
+
+	fetch('https://nominatim.openstreetmap.org/search?city=Paris&format=json')
+    .then(response => response.json())
+    .then(data => {
+        var lat = data[0].lat;
+        var lon = data[0].lon;
+        // Use lat and lon
+    });
+
+
+    var marker = L.marker([location.lat, location.lng]).addTo(map);
+    marker.bindPopup(location.name);
+});
+
+
+    var positron = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+    }).addTo(map);
+
+	// Creating table from JSON
+	var container = document.getElementById('table-container');
+    var table = document.createElement('table');
+    table.style.width = '100%';
+    table.setAttribute('border', '1');
+
+    var thead = document.createElement('thead');
+    var headerRow = document.createElement('tr');
+
+    var headers = ['City', 'Latitude', 'Longitude'];
+    headers.forEach(function(header) {
+        var th = document.createElement('th');
+        th.appendChild(document.createTextNode(header));
+        headerRow.appendChild(th);
+    });
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+
+    locations.forEach(function(location) {
+        var tr = document.createElement('tr');
+        var tdName = document.createElement('td');
+        tdName.appendChild(document.createTextNode(location.name));
+        tr.appendChild(tdName);
+
+        var tdLat = document.createElement('td');
+        tdLat.appendChild(document.createTextNode(location.lat));
+        tr.appendChild(tdLat);
+
+        var tdLng = document.createElement('td');
+        tdLng.appendChild(document.createTextNode(location.lng));
+        tr.appendChild(tdLng);
+
+        tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    container.appendChild(table);
+</script>
+</body>
+</html>
