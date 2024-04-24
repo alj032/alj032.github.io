@@ -1,24 +1,71 @@
-<div id="header"></div>
-<div id="main"></div>
-<div id="footer"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile-Friendly Layout</title>
+  <style>
+    /* Basic reset and typography */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
 
-<script>
+    /* Container with max-width and auto margins */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
 
-	fetch('partials/header.html')
-		.then(response => response.text())
-		.then(data => {
-		  document.getElementById('header').innerHTML = data;
-		});
-	
-	fetch('partials/main.html')
-		.then(response => response.text())
-		.then(data => {
-		  document.getElementById('main').innerHTML = data;
-		});
-	
-	fetch('partials/footer.html')
-		.then(response => response.text())
-		.then(data => {
-		  document.getElementById('footer').innerHTML = data;
-		});
-</script>
+    /* Responsive images */
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Media query for smaller screens */
+    @media (max-width: 600px) {
+      .container {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>My Mobile-Friendly Website</h1>
+      <nav>
+        <ul>
+          <li><a href="#">Home</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Services</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <section>
+        <h2>Welcome</h2>
+        <p>This is a mobile-friendly layout built with HTML and CSS.</p>
+        <img src="https://via.placeholder.com/800x400" alt="Placeholder Image">
+      </section>
+
+      <section>
+        <h2>Features</h2>
+        <ul>
+          <li>Responsive design</li>
+          <li>Mobile-friendly layout</li>
+          <li>Accessible content</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2023 My Mobile-Friendly Website</p>
+    </footer>
+  </div>
+</body>
+</html>
