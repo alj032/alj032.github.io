@@ -13,12 +13,12 @@
 	fetch('partials/main.html')
 		.then(response => response.text())
 		.then(data => {
-		  document.getElementById('header').innerHTML = data;
+		  document.getElementById('main').innerHTML = data;
 		});
 	
 	fetch('partials/footer.html')
 		.then(response => response.text())
 		.then(data => {
-		  document.getElementById('header').innerHTML = data;
+		  document.getElementById('footer').innerHTML = data;
 		});
 </script>
