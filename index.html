@@ -16,6 +16,20 @@ body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
 #main {margin-left: 120px}
 /* Remove margins from "page content" on small screens */
 @media only screen and (max-width: 600px) {#main {margin-left: 0}}
+
+    #banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background-color: #333;
+      color: #fff;
+      font-size: 20px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+	
 </style>
 </head>
 <body class="w3-black">
@@ -50,6 +64,10 @@ body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
     <a href="#blog" class="w3-bar-item w3-button" style="width:25% !important">BLOG</a>
     <a href="#contact" class="w3-bar-item w3-button" style="width:25% !important">CONTACT</a>
   </div>
+</div>
+
+<div id="banner">
+    <span id="bannerText">This is a scrolling banner.</span>
 </div>
 
 <!-- Page Content -->
@@ -161,3 +179,21 @@ Core Competencies: Java, Python, JavaScript, Agile, Git, CI/CD, OOP, Data Struct
 
 </body>
 </html>
+
+<script>
+window.onload = function() {
+  var bannerText = document.getElementById("bannerText");
+  var bannerWidth = bannerText.offsetWidth;
+  var containerWidth = document.getElementById("banner").offsetWidth;
+
+  function animateBanner() {
+    bannerText.style.transform = "translateX(-" + (bannerWidth + containerWidth) + "px)";
+    bannerText.style.transition = "transform 20s linear infinite";
+  }
+
+  animateBanner();
+
+  // Restart the animation when it finishes
+  bannerText.addEventListener("transitionend", animateBanner)
+  };
+</script>
