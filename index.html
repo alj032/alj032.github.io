@@ -67,7 +67,7 @@ body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
 </div>
 
 <div id="banner">
-    <span id="bannerText">This is a scrolling banner.</span>
+    <marquee bgcolor="slategrey" font style="bold" scrolldelay="100"><font size="5" face="Verdana"><font color="#D8BFD8">***Simple scrolling text***</marquee>
 </div>
 
 <!-- Page Content -->
@@ -176,27 +176,6 @@ Core Competencies: Java, Python, JavaScript, Agile, Git, CI/CD, OOP, Data Struct
 
 <!-- END PAGE CONTENT -->
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-
-  console.log("hi")
-  var bannerText = document.getElementById("bannerText");
-  var bannerWidth = bannerText.offsetWidth;
-  var containerWidth = document.getElementById("banner").offsetWidth;
-
- function animateBanner() {
-    bannerText.style.transform = "translateX(-" + (bannerWidth + containerWidth) + "px)";
-    bannerText.style.transition = "transform 20s linear infinite";
-  }
-
-  animateBanner();
-
-  // Restart the animation when it finishes
-  bannerText.addEventListener("transitionend", animateBanner)
-  });
-</script>
-
 </body>
 </html>
 
