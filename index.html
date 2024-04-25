@@ -185,16 +185,16 @@ document.addEventListener("DOMContentLoaded", function() {
   var bannerWidth = bannerText.offsetWidth;
   var containerWidth = document.getElementById("banner").offsetWidth;
 
+ function animateBanner() {
+    bannerText.style.transform = "translateX(-" + (bannerWidth + containerWidth) + "px)";
+    bannerText.style.transition = "transform 20s linear infinite";
+  }
+
   animateBanner();
 
   // Restart the animation when it finishes
   bannerText.addEventListener("transitionend", animateBanner)
   });
-  
- function animateBanner() {
-    bannerText.style.transform = "translateX(-" + (bannerWidth + containerWidth) + "px)";
-    bannerText.style.transition = "transform 20s linear infinite";
-  }
 </script>
 
 </body>
