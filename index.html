@@ -30,6 +30,15 @@ body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
       white-space: nowrap;
     }
 	
+	.fixed-bg {
+	  background-image: url("img_tree.gif");
+	  min-height: 500px;
+	  background-attachment: fixed;
+	  background-position: center;
+	  background-repeat: no-repeat;
+	  background-size: cover;
+	}
+	
 </style>
 </head>
 <body class="w3-black">
@@ -73,11 +82,14 @@ body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
 <!-- Page Content -->
 <div class="w3-padding-large" id="main">
   <!-- Header/Home -->
-  <header class="w3-container w3-padding-32 w3-center w3-black" id="home">
+  <div class="fixed-bg">
+    <header class="w3-container w3-padding-32 w3-center w3-black" id="home">
     <h1 class="w3-jumbo"><span class="w3-hide-small">I'm</span> Austin Jackson.</h1>
     <p>Software Engineer and Technology Advocate</p>
     <img src="/images/aj.jpg" style="border-radius: 50px; max-height: 20vw;" alt="photo" class="w3-image">
   </header>
+  </div>
+
   
   <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="alj032" data-description="Support me on Buy me a coffee!" data-message="Thanks for visting! - Austin" data-color="#FF813F" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
 
