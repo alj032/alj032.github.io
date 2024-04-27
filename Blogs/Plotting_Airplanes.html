@@ -12,7 +12,6 @@
         }
         #map {
             width: 100%;
-            height: calc(100vh - 50px);
         }
 
 		#addLayerButton {
@@ -43,28 +42,33 @@
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
+// Function to handle geolocation success
+function onLocationSuccess(position) {
+    var latitude = position.coords.latitude;
+    var longitude = position.coords.longitude;
+
+    // Set the map view to the user's location
+    map.setView([latitude, longitude], 13);
+
+    // Add a marker at the user's location
+    L.marker([latitude, longitude]).addTo(map)
+        .bindPopup('You are here.')
+        .openPopup();
+}
+
+// Function to handle geolocation error
+function onLocationError(error) {
+    console.log('Error getting location:', error.message);
+}
+
 // Check if geolocation is supported by the browser
 if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            var latitude = position.coords.latitude;
-            var longitude = position.coords.longitude;
-            
-            // Set the map view to the user's location
-            map.setView([latitude, longitude], 13);
-            
-            // Add a marker at the user's location
-            L.marker([latitude, longitude]).addTo(map)
-                .bindPopup('You are here.')
-                .openPopup();
-        },
-        function(error) {
-            console.log('Error getting location:', error);
-        }
-    );
+    // Request the user's location
+    navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
 } else {
     console.log('Geolocation is not supported by this browser.');
 }
+
 			
 
 // ... (Existing Leaflet map initialization code)
