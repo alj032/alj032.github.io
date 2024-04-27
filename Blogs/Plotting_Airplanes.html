@@ -1,76 +1,66 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Plane Tracking Map</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-      integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
-      crossorigin=""
-    />
-    <script
-      src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
-      integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
-      crossorigin=""
-    ></script>
-    <script src="script.js"></script>
+<head>
+    <title>Website with Menu Bar</title>
     <style>
-      #map {
-        height: 500px;
-        width: 100%;
-      }
+        .menu {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        .menu li {
+            float: left;
+        }
+
+        .menu li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        .menu li a:hover:not(.active) {
+            background-color: #ddd;
+            color: black;
+        }
+
+        .active {
+            background-color: #4CAF50;
+        }
     </style>
-  </head>
-  <body onload="initMap()">
-    <div id="map"></div>
-  </body>
-  
-  <script>
-  let map;
-let planeMarkers = [];
+</head>
+<body>
+    <ul class="menu">
+        <li><a class="active" href="#home">Home</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="https://www.google.com/maps" target="_blank">Map</a></li>
+        <li><a href="#contact">Contact</a></li>
+    </ul>
 
-function initMap() {
-  map = L.map('map').setView([0, 0], 2);
+    <h1>Welcome to our website</h1>
+    <p>Here, you can find information about our company and services.</p>
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(map);
+    <script>
+        // Get all menu links
+        var menuLinks = document.querySelectorAll(".menu li a");
 
-  fetchPlaneData();
-}
+        // Add click event listener to each menu link
+        menuLinks.forEach(function(link) {
+            link.addEventListener("click", function() {
+                // Remove the "active" class from all menu links
+                menuLinks.forEach(function(link) {
+                    link.classList.remove("active");
+                });
 
-async function fetchPlaneData() {
-  try {
-    const response = await fetch('https://opensky-network.org/api/states/all');
-    const data = await response.json();
-
-    if (data.states) {
-      const planeData = data.states.map((state) => ({
-        lat: state[6],
-        lng: state[5],
-        callsign: state[1],
-      }));
-
-      updatePlaneMarkers(planeData);
-    } else {
-      console.error('Error: No plane data received');
-    }
-  } catch (error) {
-    console.error('Error fetching plane data:', error);
-  }
-}
-
-function updatePlaneMarkers(planeData) {
-  // Clear existing markers
-  planeMarkers.forEach((marker) => map.removeLayer(marker));
-  planeMarkers = [];
-
-  // Add new markers for each plane
-  planeData.forEach((plane) => {
-    const marker = L.marker([plane.lat, plane.lng]).addTo(map);
-    marker.bindPopup(`Callsign: ${plane.callsign}`);
-    planeMarkers.push(marker);
-  });
-}
-  </script>
+                // Add the "active" class to the clicked menu link
+                this.classList.add("active");
+            });
+        });
+    </script>
+</body>
 </html>
