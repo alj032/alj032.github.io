@@ -68,31 +68,54 @@
             .openPopup();
 			
 
-		var layerCount = 0;
+// ... (Existing Leaflet map initialization code)
 
-		document.getElementById('addLayerButton').addEventListener('click', function() {
-			layerCount++;
-			var newLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-				opacity: 0.7
-			}).addTo(map);
-			
-			// Add a unique identifier to the layer
-			newLayer.id = 'layer' + layerCount;
-			
-			// Create a remove button for the layer
-			var removeButton = L.control({position: 'topright'});
-			removeButton.onAdd = function (map) {
-				var div = L.DomUtil.create('div', 'remove-button');
-				div.innerHTML = 'Remove Layer ' + layerCount;
-				div.onclick = function() {
-					map.removeLayer(newLayer);
-					map.removeControl(removeButton);
-				};
-				return div;
-			};
-			removeButton.addTo(map);
-		});
+var layerCount = 0;
+
+document.getElementById('addLayerButton').addEventListener('click', function() {
+    layerCount++;
+    
+    // Prompt the user to enter the URL or path to the GeoJSON file
+    var geoJsonUrl = prompt('Enter the URL or path to the GeoJSON file:');
+    
+    // Load and parse the GeoJSON data
+    fetch(geoJsonUrl)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            // Create a new GeoJSON layer with the parsed data
+            var geoJsonLayer = L.geoJSON(data, {
+                style: function(feature) {
+                    return {
+                        color: 'blue',
+                        weight: 2,
+                        fillColor: 'lightblue',
+                        fillOpacity: 0.7
+                    };
+                }
+            }).addTo(map);
+            
+            // Add a unique identifier to the layer
+            geoJsonLayer.id = 'layer' + layerCount;
+            
+            // Create a remove button for the layer
+            var removeButton = L.control({position: 'topright'});
+            removeButton.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'remove-button');
+                div.innerHTML = 'Remove Layer ' + layerCount;
+                div.onclick = function() {
+                    map.removeLayer(geoJsonLayer);
+                    map.removeControl(removeButton);
+                };
+                return div;
+            };
+            removeButton.addTo(map);
+        })
+        .catch(function(error) {
+            console.log('Error loading GeoJSON data:', error);
+        });
+});
     </script>
 </body>
 </html>
