@@ -75,60 +75,82 @@ var layerCount = 0;
 document.getElementById('addLayerButton').addEventListener('click', function() {
     layerCount++;
     
-    // Prompt the user to enter the URL or path to the GeoJSON file
-    var geoJsonUrl = prompt('Enter the URL or path to the GeoJSON file:');
+    // Prompt the user to choose the input type
+    var inputType = prompt('Enter the input type (raw or url):');
     
-    // Load and parse the GeoJSON data
-    fetch(geoJsonUrl)
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(data) {
-            // Create a new GeoJSON layer with the parsed data
-            var geoJsonLayer = L.geoJSON(data, {
-                pointToLayer: function(feature, latlng) {
-                    return L.circleMarker(latlng, {
-                        radius: 8,
-                        fillColor: 'blue',
-                        color: 'white',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    });
-                },
-                onEachFeature: function(feature, layer) {
-                    // Create a popup with the feature properties
-                    var popupContent = '<div>';
-                    for (var prop in feature.properties) {
-                        popupContent += '<b>' + prop + ':</b> ' + feature.properties[prop] + '<br>';
-                    }
-                    popupContent += '</div>';
-                    
-                    // Bind the popup to the layer
-                    layer.bindPopup(popupContent);
-                }
-            }).addTo(map);
-            
-            // Add a unique identifier to the layer
-            geoJsonLayer.id = 'layer' + layerCount;
-            
-            // Create a remove button for the layer
-            var removeButton = L.control({position: 'topright'});
-            removeButton.onAdd = function (map) {
-                var div = L.DomUtil.create('div', 'remove-button');
-                div.innerHTML = 'Remove Layer ' + layerCount;
-                div.onclick = function() {
-                    map.removeLayer(geoJsonLayer);
-                    map.removeControl(removeButton);
-                };
-                return div;
-            };
-            removeButton.addTo(map);
-        })
-        .catch(function(error) {
-            console.log('Error loading GeoJSON data:', error);
-        });
+    if (inputType === 'raw') {
+        // Prompt the user to enter the raw GeoJSON data
+        var rawGeoJson = prompt('Enter the raw GeoJSON data:');
+        
+        try {
+            // Parse the raw GeoJSON data
+            var data = JSON.parse(rawGeoJson);
+            addGeoJsonLayer(data);
+        } catch (error) {
+            console.log('Error parsing raw GeoJSON data:', error);
+        }
+    } else if (inputType === 'url') {
+        // Prompt the user to enter the URL or path to the GeoJSON file
+        var geoJsonUrl = prompt('Enter the URL or path to the GeoJSON file:');
+        
+        // Load and parse the GeoJSON data from the URL
+        fetch(geoJsonUrl)
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                addGeoJsonLayer(data);
+            })
+            .catch(function(error) {
+                console.log('Error loading GeoJSON data from URL:', error);
+            });
+    } else {
+        console.log('Invalid input type. Please enter either "raw" or "url".');
+    }
 });
+
+function addGeoJsonLayer(data) {
+    // Create a new GeoJSON layer with the parsed data
+    var geoJsonLayer = L.geoJSON(data, {
+        pointToLayer: function(feature, latlng) {
+            return L.circleMarker(latlng, {
+                radius: 8,
+                fillColor: 'blue',
+                color: 'white',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            });
+        },
+        onEachFeature: function(feature, layer) {
+            // Create a popup with the feature properties
+            var popupContent = '<div>';
+            for (var prop in feature.properties) {
+                popupContent += '<b>' + prop + ':</b> ' + feature.properties[prop] + '<br>';
+            }
+            popupContent += '</div>';
+            
+            // Bind the popup to the layer
+            layer.bindPopup(popupContent);
+        }
+    }).addTo(map);
+    
+    // Add a unique identifier to the layer
+    geoJsonLayer.id = 'layer' + layerCount;
+    
+    // Create a remove button for the layer
+    var removeButton = L.control({position: 'topright'});
+    removeButton.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'remove-button');
+        div.innerHTML = 'Remove Layer ' + layerCount;
+        div.onclick = function() {
+            map.removeLayer(geoJsonLayer);
+            map.removeControl(removeButton);
+        };
+        return div;
+    };
+    removeButton.addTo(map);
+}
     </script>
 </body>
 </html>
