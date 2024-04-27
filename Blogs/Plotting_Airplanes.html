@@ -70,6 +70,8 @@
 
 // ... (Existing Leaflet map initialization code)
 
+// ... (Existing Leaflet map initialization code)
+
 var layerCount = 0;
 
 document.getElementById('addLayerButton').addEventListener('click', function() {
@@ -93,6 +95,17 @@ document.getElementById('addLayerButton').addEventListener('click', function() {
                         fillColor: 'lightblue',
                         fillOpacity: 0.7
                     };
+                },
+                onEachFeature: function(feature, layer) {
+                    // Create a popup with the feature properties
+                    var popupContent = '<div>';
+                    for (var prop in feature.properties) {
+                        popupContent += '<b>' + prop + ':</b> ' + feature.properties[prop] + '<br>';
+                    }
+                    popupContent += '</div>';
+                    
+                    // Bind the popup to the layer
+                    layer.bindPopup(popupContent);
                 }
             }).addTo(map);
             
