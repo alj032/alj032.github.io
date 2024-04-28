@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mobile-Friendly Map with Leaflet</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         body {
             margin: 0;
@@ -236,13 +237,13 @@ function addAirplaneTrackingLayer() {
             return response.json();
         })
         .then(function(data) {
-            var airplaneIcon = L.icon({
-                iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            });
+			var airplaneIcon = L.divIcon({
+				html: '<i class="fas fa-plane"></i>',
+				className: 'airplane-icon',
+				iconSize: [25, 25],
+				iconAnchor: [12, 12],
+				popupAnchor: [0, -10]
+			});
 
             var airplaneMarkers = [];
 
