@@ -156,12 +156,12 @@ function addWeatherRadarLayer() {
 }
 
 function addRadarStationsLayer() {
-    if (weatherRadarLayer) {
+    if (radarStationsLayer) {
         // If the weather radar layer exists, remove it from the map
-        map.removeLayer(weatherRadarLayer);
-        map.removeControl(weatherRadarRemoveButton);
-        weatherRadarLayer = null;
-        weatherRadarRemoveButton = null;
+        map.removeLayer(radarStationsLayer);
+        map.removeControl(radarStationsRemoveButton);
+        radarStationsLayer = null;
+        radarStationsRemoveButton = null;
         return;
     }
 
