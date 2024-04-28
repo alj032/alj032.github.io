@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mobile-Friendly Map with Leaflet</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         body {
             margin: 0;
@@ -15,157 +15,77 @@
             width: 100%;
             height: 100vh;
         }
-
-		#addLayerButton {
-			position: fixed;
-			bottom: 20px;
-			right: 20px;
-			width: 50px;
-			height: 50px;
-			border-radius: 50%;
-			background-color: #333;
-			color: white;
-			font-size: 24px;
-			border: none;
-			cursor: pointer;
-			z-index: 1000;
-		}
-		
-		#addAirplaneTrackingButton {
-			position: fixed;
-			bottom: 20px;
-			right: 80px;
-			width: 50px;
-			height: 50px;
-			border-radius: 50%;
-			background-color: #333;
-			color: white;
-			font-size: 24px;
-			border: none;
-			cursor: pointer;
-			z-index: 1000;
-		}
-		
-		.modal {
-			display: none;
-			position: fixed;
-			z-index: 1000;
-			left: 0;
-			top: 0;
-			width: 100%;
-			height: 100%;
-			overflow: auto;
-			background-color: rgba(0, 0, 0, 0.4);
-		}
-
-		.modal-content {
-			background-color: #fefefe;
-			margin: 15% auto;
-			padding: 20px;
-			border: 1px solid #888;
-			width: 80%;
-		}
-		
-		#addWeatherRadarButton {
-			position: fixed;
-			bottom: 20px;
-			right: 140px;
-			width: 50px;
-			height: 50px;
-			border-radius: 50%;
-			background-color: #333;
-			color: white;
-			font-size: 24px;
-			border: none;
-			cursor: pointer;
-			z-index: 1000;
-		}
-		
-#buttonWheelBackdrop {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-}
-
-#buttonWheel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background-color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    overflow: hidden;
-}
-
-#buttonWheel button {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: #555;
-    color: white;
-    font-size: 20px;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-#addLayerButton {
-    transform: translate(0, -75px);
-}
-
-#addAirplaneTrackingButton {
-    transform: translate(65px, -37.5px);
-}
-
-#addWeatherRadarButton {
-    transform: translate(65px, 37.5px);
-}
+        .button-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .button-container button {
+            display: block;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #333;
+            color: white;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
 
-<div id="buttonWheelBackdrop"></div>
-<div id="buttonWheel">
-    <button id="addLayerButton">fas fa-plus-circle</button>
-    <button id="addAirplaneTrackingButton">✈️</button>
-    <button id="addWeatherRadarButton">🌩️</button>
-</div>
+    <div class="button-container">
+        <button id="addLayerButton"><i class="fas fa-plus-circle"></i></button>
+        <button id="addAirplaneTrackingButton">✈️</button>
+        <button id="addWeatherRadarButton">🌩️</button>
+    </div>
 
-	<div id="modal" class="modal">
-    <div class="modal-content">
-        <h2>Add GeoJSON Layer</h2>
-        <div>
-            <label for="inputType">Input Type:</label>
-            <select id="inputType">
-                <option value="raw">Raw</option>
-                <option value="url">URL</option>
-            </select>
-        </div>
-        <div>
-            <label for="inputData">Input Data:</label>
-            <textarea id="inputData" rows="5"></textarea>
-        </div>
-        <div>
-            <button id="addLayerModalButton">Add Layer</button>
-            <button id="cancelModalButton">Cancel</button>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h2>Add GeoJSON Layer</h2>
+            <div>
+                <label for="inputType">Input Type:</label>
+                <select id="inputType">
+                    <option value="raw">Raw</option>
+                    <option value="url">URL</option>
+                </select>
+            </div>
+            <div>
+                <label for="inputData">Input Data:</label>
+                <textarea id="inputData" rows="5"></textarea>
+            </div>
+            <div>
+                <button id="addLayerModalButton">Add Layer</button>
+                <button id="cancelModalButton">Cancel</button>
+            </div>
         </div>
     </div>
-</div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        
     <script>
 	document.getElementById('addWeatherRadarButton').addEventListener('click', function() {
     addWeatherRadarLayer();
@@ -463,27 +383,7 @@ function addAirplaneTrackingLayer() {
             console.log('Error loading airplane tracking data:', error);
         });
 }
-
-
-		var buttonWheel = document.getElementById('buttonWheel');
-        var buttonWheelBackdrop = document.getElementById('buttonWheelBackdrop');
-        var angle = 0;
-
-        document.onwheel = function(e) {
-            if (e.deltaY) {
-                e.preventDefault();
-                angle += e.deltaY < 0 ? 4 : -4;
-                buttonWheel.style.transform = "rotate(" + angle + "deg)";
-            }
-        };
-
-        buttonWheel.addEventListener('mouseenter', function() {
-            buttonWheelBackdrop.style.display = 'block';
-        });
-
-        buttonWheel.addEventListener('mouseleave', function() {
-            buttonWheelBackdrop.style.display = 'none';
-        });
+    </script>
     </script>
 </body>
 </html>
