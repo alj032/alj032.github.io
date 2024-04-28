@@ -104,9 +104,10 @@
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        L.marker([51.5, -0.09]).addTo(map)
-            .bindPopup('A sample popup.<br> Easily customizable.')
-            .openPopup();
+		getUserLocation();
+        <!-- L.marker([51.5, -0.09]).addTo(map) -->
+            <!-- .bindPopup('A sample popup.<br> Easily customizable.') -->
+            <!-- .openPopup(); -->
 			
 
 // ... (Existing Leaflet map initialization code)
@@ -149,6 +150,27 @@ document.getElementById('cancelModalButton').addEventListener('click', function(
     document.getElementById('modal').style.display = 'none';
     document.getElementById('inputData').value = '';
 });
+
+function getUserLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                var latitude = position.coords.latitude;
+                var longitude = position.coords.longitude;
+                var userLocation = L.latLng(latitude, longitude);
+                map.setView(userLocation, 13);
+                L.marker(userLocation).addTo(map)
+                    .bindPopup('Your Location')
+                    .openPopup();
+            },
+            function(error) {
+                console.log('Error getting user location:', error);
+            }
+        );
+    } else {
+        console.log('Geolocation is not supported by this browser.');
+    }
+}
 
 function addGeoJsonLayer(data) {
     // Create a new GeoJSON layer with the parsed data
