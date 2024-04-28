@@ -227,7 +227,7 @@ document.getElementById('addLayerModalButton').addEventListener('click', functio
             console.log('Error parsing raw GeoJSON data:', error);
         }
     } else if (inputType === 'url') {
-        fetch(inputData)
+        fetch(`https://cors-anywhere.herokuapp.com/${inputData}`)
             .then(function(response) {
                 return response.json();
             })
