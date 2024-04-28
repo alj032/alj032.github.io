@@ -276,7 +276,17 @@ function getUserLocation() {
                 var longitude = position.coords.longitude;
                 var userLocation = L.latLng(latitude, longitude);
                 map.setView(userLocation, 13);
-                L.marker(userLocation).addTo(map)
+
+                // Create a custom icon using Font Awesome
+                var userIcon = L.divIcon({
+                    html: '<i class="fas fa-male"></i>',
+                    className: 'user-location-icon',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 20]
+                });
+
+                // Add the marker with the custom icon to the map
+                L.marker(userLocation, { icon: userIcon }).addTo(map)
                     .bindPopup('Your Location')
                     .openPopup();
             },
