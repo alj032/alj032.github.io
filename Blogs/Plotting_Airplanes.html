@@ -44,12 +44,53 @@
 			cursor: pointer;
 			z-index: 1000;
 		}
+		
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1000;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+			background-color: rgba(0, 0, 0, 0.4);
+		}
+
+		.modal-content {
+			background-color: #fefefe;
+			margin: 15% auto;
+			padding: 20px;
+			border: 1px solid #888;
+			width: 80%;
+		}
     </style>
 </head>
 <body>
     <div id="map"></div>
 	<button id="addLayerButton">+</button>
 	<button id="addAirplaneTrackingButton">✈️</button>
+	
+	<div id="modal" class="modal">
+    <div class="modal-content">
+        <h2>Add GeoJSON Layer</h2>
+        <div>
+            <label for="inputType">Input Type:</label>
+            <select id="inputType">
+                <option value="raw">Raw</option>
+                <option value="url">URL</option>
+            </select>
+        </div>
+        <div>
+            <label for="inputData">Input Data:</label>
+            <textarea id="inputData" rows="5"></textarea>
+        </div>
+        <div>
+            <button id="addLayerModalButton">Add Layer</button>
+            <button id="cancelModalButton">Cancel</button>
+        </div>
+    </div>
+</div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
@@ -73,28 +114,22 @@
 var layerCount = 0;
 
 document.getElementById('addLayerButton').addEventListener('click', function() {
-    layerCount++;
-    
-    // Prompt the user to choose the input type
-    var inputType = prompt('Enter the input type (raw or url):');
-    
+    document.getElementById('modal').style.display = 'block';
+});
+
+document.getElementById('addLayerModalButton').addEventListener('click', function() {
+    var inputType = document.getElementById('inputType').value;
+    var inputData = document.getElementById('inputData').value;
+
     if (inputType === 'raw') {
-        // Prompt the user to enter the raw GeoJSON data
-        var rawGeoJson = prompt('Enter the raw GeoJSON data:');
-        
         try {
-            // Parse the raw GeoJSON data
-            var data = JSON.parse(rawGeoJson);
+            var data = JSON.parse(inputData);
             addGeoJsonLayer(data);
         } catch (error) {
             console.log('Error parsing raw GeoJSON data:', error);
         }
     } else if (inputType === 'url') {
-        // Prompt the user to enter the URL or path to the GeoJSON file
-        var geoJsonUrl = prompt('Enter the URL or path to the GeoJSON file:');
-        
-        // Load and parse the GeoJSON data from the URL
-        fetch(geoJsonUrl)
+        fetch(inputData)
             .then(function(response) {
                 return response.json();
             })
@@ -104,9 +139,15 @@ document.getElementById('addLayerButton').addEventListener('click', function() {
             .catch(function(error) {
                 console.log('Error loading GeoJSON data from URL:', error);
             });
-    } else {
-        console.log('Invalid input type. Please enter either "raw" or "url".');
     }
+
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('inputData').value = '';
+});
+
+document.getElementById('cancelModalButton').addEventListener('click', function() {
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('inputData').value = '';
 });
 
 function addGeoJsonLayer(data) {
