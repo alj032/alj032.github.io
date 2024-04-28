@@ -159,7 +159,9 @@ function addWeatherRadarLayer() {
 
             // Create a tile layer for radar imagery
             var radarImageryLayer = L.tileLayer(radarImageryUrl, {
-                attribution: 'Weather Radar Imagery &copy; National Weather Service'
+                attribution: 'Weather Radar Imagery &copy; National Weather Service',
+                bounds: map.getBounds(),
+                crs: L.CRS.EPSG3857
             });
 
             // Create a layer group combining radar imagery and radar stations
