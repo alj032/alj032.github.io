@@ -65,12 +65,28 @@
 			border: 1px solid #888;
 			width: 80%;
 		}
+		
+		#addWeatherRadarButton {
+			position: fixed;
+			bottom: 20px;
+			right: 140px;
+			width: 50px;
+			height: 50px;
+			border-radius: 50%;
+			background-color: #333;
+			color: white;
+			font-size: 24px;
+			border: none;
+			cursor: pointer;
+			z-index: 1000;
+		}
     </style>
 </head>
 <body>
     <div id="map"></div>
 	<button id="addLayerButton">+</button>
 	<button id="addAirplaneTrackingButton">✈️</button>
+	<button id="addWeatherRadarButton">🌩️</button>
 	
 	<div id="modal" class="modal">
     <div class="modal-content">
@@ -95,6 +111,52 @@
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
+	var weatherRadarLayer = null;
+var weatherRadarRemoveButton = null;
+
+function addWeatherRadarLayer() {
+    if (weatherRadarLayer) {
+        // If the weather radar layer exists, remove it from the map
+        map.removeLayer(weatherRadarLayer);
+        map.removeControl(weatherRadarRemoveButton);
+        weatherRadarLayer = null;
+        weatherRadarRemoveButton = null;
+        return;
+    }
+
+    // URL for fetching weather radar data (replace with your own API endpoint)
+    var weatherRadarUrl = 'https://api.example.com/weather-radar';
+
+    fetch(weatherRadarUrl)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            // Create a tile layer for weather radar data
+            weatherRadarLayer = L.tileLayer(data.tileUrl, {
+                attribution: 'Weather Radar Data'
+            }).addTo(map);
+
+            // Create a remove button for the weather radar layer
+            weatherRadarRemoveButton = L.control({position: 'topright'});
+            weatherRadarRemoveButton.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'remove-button');
+                div.innerHTML = 'Remove Weather Radar';
+                div.onclick = function() {
+                    addWeatherRadarLayer();
+                };
+                return div;
+            };
+            weatherRadarRemoveButton.addTo(map);
+        })
+        .catch(function(error) {
+            console.log('Error loading weather radar data:', error);
+        });
+}
+	
+	
+	
+	
 	var airplaneLayer = null;
 var airplaneRemoveButton = null;
 	
