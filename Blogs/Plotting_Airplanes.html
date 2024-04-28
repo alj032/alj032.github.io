@@ -12,7 +12,6 @@
         }
         #map {
             width: 100%;
-            height: calc(100vh - 50px);
         }
 
 		#addLayerButton {
@@ -172,12 +171,18 @@ function addAirplaneTrackingLayer() {
             data.states.forEach(function(state) {
                 var latitude = state[6];
                 var longitude = state[5];
-                var callsign = state[1];
-                var velocity = state[9];
-                var altitude = state[7];
+                var callsign = state[1] || 'N/A';
+                var velocity = state[9] !== null ? state[9] + ' m/s' : 'N/A';
+                var altitude = state[7] !== null ? state[7] + ' m' : 'N/A';
 
-                var marker = L.marker([latitude, longitude], {icon: airplaneIcon}).addTo(map);
-                marker.bindPopup('<b>Callsign:</b> ' + callsign + '<br><b>Velocity:</b> ' + velocity + ' m/s<br><b>Altitude:</b> ' + altitude + ' m');
+                if (latitude !== null && longitude !== null) {
+                    var marker = L.marker([latitude, longitude], {icon: airplaneIcon}).addTo(map);
+                    marker.bindPopup(
+                        '<b>Callsign:</b> ' + callsign +
+                        '<br><b>Velocity:</b> ' + velocity +
+                        '<br><b>Altitude:</b> ' + altitude
+                    );
+                }
             });
         })
         .catch(function(error) {
