@@ -111,7 +111,7 @@
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
-	var weatherRadarLayer = null;
+var weatherRadarLayer = null;
 var weatherRadarRemoveButton = null;
 
 function addWeatherRadarLayer() {
@@ -124,17 +124,21 @@ function addWeatherRadarLayer() {
         return;
     }
 
-    // URL for fetching weather radar data (replace with your own API endpoint)
-    var weatherRadarUrl = 'https://api.example.com/weather-radar';
+    // RainViewer API endpoint
+    var weatherRadarUrl = 'https://api.rainviewer.com/public/weather-maps.json';
 
     fetch(weatherRadarUrl)
         .then(function(response) {
             return response.json();
         })
         .then(function(data) {
+            // Get the latest weather radar tile URL from the API response
+            var tileUrl = data.radar.past.slice(-1)[0].path + '/256/{z}/{x}/{y}/2/1_1.png';
+
             // Create a tile layer for weather radar data
-            weatherRadarLayer = L.tileLayer(data.tileUrl, {
-                attribution: 'Weather Radar Data'
+            weatherRadarLayer = L.tileLayer(tileUrl, {
+                attribution: 'Weather Radar Data &copy; RainViewer',
+                opacity: 0.7
             }).addTo(map);
 
             // Create a remove button for the weather radar layer
