@@ -189,19 +189,19 @@ function addRadarStationsLayer() {
             });
 
             // Create a layer group for the radar markers
-            weatherRadarLayer = L.layerGroup(radarMarkers).addTo(map);
+            radarStationsLayer = L.layerGroup(radarMarkers).addTo(map);
 
             // Create a remove button for the weather radar layer
-            weatherRadarRemoveButton = L.control({position: 'topright'});
-            weatherRadarRemoveButton.onAdd = function (map) {
+            radarStationsRemoveButton = L.control({position: 'topright'});
+            radarStationsRemoveButton.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'remove-button');
                 div.innerHTML = 'Remove Weather Radar';
                 div.onclick = function() {
-                    addWeatherRadarLayer();
+                    addRadarStationsLayer();
                 };
                 return div;
             };
-            weatherRadarRemoveButton.addTo(map);
+            radarStationsRemoveButton.addTo(map);
         })
         .catch(function(error) {
             console.log('Error loading weather radar data:', error);
