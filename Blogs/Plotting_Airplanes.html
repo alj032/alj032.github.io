@@ -227,7 +227,7 @@ document.getElementById('addLayerModalButton').addEventListener('click', functio
             console.log('Error parsing raw GeoJSON data:', error);
         }
     } else if (inputType === 'url') {
-        fetch(`https://cors-anywhere.herokuapp.com/${inputData}`)
+        fetch(`https://crossorigin.me/${inputData}`)
             .then(function(response) {
                 return response.json();
             })
@@ -289,7 +289,7 @@ function addGeoJsonLayer(data) {
             console.log('The provided URL does not point to a GeoJSON file.');
 
             // You can fetch the URL and handle the response accordingly
-            fetch(`https://cors-anywhere.herokuapp.com/${data}`)
+            fetch(`https://crossorigin.me/${data}`)
                 .then(response => response.text())
                 .then(html => {
                     // Parse the HTML content and extract relevant data
