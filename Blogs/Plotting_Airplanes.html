@@ -80,13 +80,56 @@
 			cursor: pointer;
 			z-index: 1000;
 		}
+		
+		#buttonWheel {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			width: 50px;
+			height: 50px;
+			border-radius: 50%;
+			background-color: #333;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			z-index: 1000;
+			overflow: hidden;
+		}
+
+		#buttonWheel button {
+			position: absolute;
+			width: 40px;
+			height: 40px;
+			border-radius: 50%;
+			background-color: #555;
+			color: white;
+			font-size: 20px;
+			border: none;
+			cursor: pointer;
+			transition: transform 0.3s ease;
+		}
+
+		#addLayerButton {
+			transform: translate(0, -60px);
+		}
+
+		#addAirplaneTrackingButton {
+			transform: translate(42px, -42px);
+		}
+
+		#addWeatherRadarButton {
+			transform: translate(60px, 0);
+		}
     </style>
 </head>
 <body>
     <div id="map"></div>
-	<button id="addLayerButton">+</button>
-	<button id="addAirplaneTrackingButton">✈️</button>
-	<button id="addWeatherRadarButton">🌩️</button>
+
+<div id="buttonWheel">
+    <button id="addLayerButton"><i class="fas fa-plus-circle"></i></button>
+    <button id="addAirplaneTrackingButton">✈️</button>
+    <button id="addWeatherRadarButton">🌩️</button>
+</div>
 	
 	<div id="modal" class="modal">
     <div class="modal-content">
@@ -407,6 +450,26 @@ function addAirplaneTrackingLayer() {
             console.log('Error loading airplane tracking data:', error);
         });
 }
+
+
+var buttonWheel = document.getElementById('buttonWheel');
+var buttons = buttonWheel.getElementsByTagName('button');
+var currentRotation = 0;
+
+buttonWheel.addEventListener('wheel', function(event) {
+    event.preventDefault();
+    var delta = event.deltaY;
+
+    if (delta > 0) {
+        currentRotation += 120;
+    } else {
+        currentRotation -= 120;
+    }
+
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].style.transform = 'rotate(' + currentRotation + 'deg) translate(60px) rotate(-' + currentRotation + 'deg)';
+    }
+});
     </script>
 </body>
 </html>
