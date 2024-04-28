@@ -29,14 +29,34 @@
 			cursor: pointer;
 			z-index: 1000;
 		}
+		
+		#addAirplaneTrackingButton {
+			position: fixed;
+			bottom: 20px;
+			right: 80px;
+			width: 50px;
+			height: 50px;
+			border-radius: 50%;
+			background-color: #333;
+			color: white;
+			font-size: 24px;
+			border: none;
+			cursor: pointer;
+			z-index: 1000;
+		}
     </style>
 </head>
 <body>
     <div id="map"></div>
 	<button id="addLayerButton">+</button>
+	<button id="addAirplaneTrackingButton">✈️</button>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
+	document.getElementById('addAirplaneTrackingButton').addEventListener('click', function() {
+    addAirplaneTrackingLayer();
+});
+	
         var map = L.map('map').setView([51.505, -0.09], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -130,6 +150,39 @@ function addGeoJsonLayer(data) {
         return div;
     };
     removeButton.addTo(map);
+}
+
+function addAirplaneTrackingLayer() {
+    // URL for fetching live airplane tracking data (replace with your own API endpoint)
+    var airplaneTrackingUrl = 'https://opensky-network.org/api/states/all';
+
+    fetch(airplaneTrackingUrl)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            var airplaneIcon = L.icon({
+                iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            data.states.forEach(function(state) {
+                var latitude = state[6];
+                var longitude = state[5];
+                var callsign = state[1];
+                var velocity = state[9];
+                var altitude = state[7];
+
+                var marker = L.marker([latitude, longitude], {icon: airplaneIcon}).addTo(map);
+                marker.bindPopup('<b>Callsign:</b> ' + callsign + '<br><b>Velocity:</b> ' + velocity + ' m/s<br><b>Altitude:</b> ' + altitude + ' m');
+            });
+        })
+        .catch(function(error) {
+            console.log('Error loading airplane tracking data:', error);
+        });
 }
     </script>
 </body>
