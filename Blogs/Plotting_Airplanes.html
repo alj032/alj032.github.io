@@ -169,6 +169,8 @@ function addAirplaneTrackingLayer() {
                 shadowSize: [41, 41]
             });
 
+            var airplaneMarkers = [];
+
             data.states.forEach(function(state) {
                 var latitude = state[6];
                 var longitude = state[5];
@@ -183,8 +185,25 @@ function addAirplaneTrackingLayer() {
                         '<br><b>Velocity:</b> ' + velocity +
                         '<br><b>Altitude:</b> ' + altitude
                     );
+                    airplaneMarkers.push(marker);
                 }
             });
+
+            // Create a layer group for the airplane markers
+            var airplaneLayer = L.layerGroup(airplaneMarkers).addTo(map);
+
+            // Create a remove button for the airplane layer
+            var removeButton = L.control({position: 'topright'});
+            removeButton.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'remove-button');
+                div.innerHTML = 'Remove Airplane Layer';
+                div.onclick = function() {
+                    map.removeLayer(airplaneLayer);
+                    map.removeControl(removeButton);
+                };
+                return div;
+            };
+            removeButton.addTo(map);
         })
         .catch(function(error) {
             console.log('Error loading airplane tracking data:', error);
