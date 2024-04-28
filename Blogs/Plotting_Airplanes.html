@@ -280,9 +280,68 @@ function getUserLocation() {
 }
 
 function addGeoJsonLayer(data) {
-    // Create a new GeoJSON layer with the parsed data
-    var geoJsonLayer = L.geoJSON(data, {
-        pointToLayer: function(feature, latlng) {
+    let geoJsonLayer;
+
+    if (typeof data === 'string') {
+        // Check if the input is a URL
+        if (!data.endsWith('.geojson')) {
+            // If the URL doesn't end with .geojson, assume it's an HTML page or a different format
+            console.log('The provided URL does not point to a GeoJSON file.');
+
+            // You can fetch the URL and handle the response accordingly
+            fetch(data)
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the HTML content and extract relevant data
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Perform your desired operations on the HTML document
+                    console.log('HTML content:', doc.documentElement.outerHTML);
+
+                    // You can also search for GeoJSON links within the HTML
+                    const geoJsonLinks = Array.from(doc.querySelectorAll('a'))
+                        .filter(link => link.href.endsWith('.geojson'))
+                        .map(link => link.href);
+
+                    if (geoJsonLinks.length > 0) {
+                        console.log('Found GeoJSON links:', geoJsonLinks);
+                        // You can fetch and add each GeoJSON link as a layer
+                    } else {
+                        console.log('No GeoJSON links found in the HTML.');
+                    }
+                })
+                .catch(error => {
+                    console.log('Error loading URL:', error);
+                });
+
+            return;
+        }
+
+        // If the input is a URL ending with .geojson, fetch the data
+        fetch(data)
+            .then(response => response.json())
+            .then(jsonData => {
+                geoJsonLayer = createGeoJsonLayer(jsonData);
+            })
+            .catch(error => {
+                console.log('Error loading GeoJSON data from URL:', error);
+            });
+    } else {
+        // If the input is already parsed JSON data
+        geoJsonLayer = createGeoJsonLayer(data);
+    }
+
+    if (geoJsonLayer) {
+        // Add the GeoJSON layer to the map and create a remove button
+        geoJsonLayer.addTo(map);
+        addRemoveButton(geoJsonLayer);
+    }
+}
+
+function createGeoJsonLayer(data) {
+    return L.geoJSON(data, {
+        pointToLayer: function (feature, latlng) {
             return L.circleMarker(latlng, {
                 radius: 8,
                 fillColor: 'blue',
@@ -292,34 +351,30 @@ function addGeoJsonLayer(data) {
                 fillOpacity: 0.8
             });
         },
-        onEachFeature: function(feature, layer) {
-            // Create a popup with the feature properties
+        onEachFeature: function (feature, layer) {
             var popupContent = '<div>';
             for (var prop in feature.properties) {
                 popupContent += '<b>' + prop + ':</b> ' + feature.properties[prop] + '<br>';
             }
             popupContent += '</div>';
-            
-            // Bind the popup to the layer
             layer.bindPopup(popupContent);
         }
-    }).addTo(map);
-    
-    // Add a unique identifier to the layer
-    geoJsonLayer.id = 'layer' + layerCount;
-    
-    // Create a remove button for the layer
-    var removeButton = L.control({position: 'topright'});
+    });
+}
+
+function addRemoveButton(layer) {
+    var removeButton = L.control({ position: 'topright' });
     removeButton.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'remove-button');
         div.innerHTML = 'Remove Layer ' + layerCount;
-        div.onclick = function() {
-            map.removeLayer(geoJsonLayer);
+        div.onclick = function () {
+            map.removeLayer(layer);
             map.removeControl(removeButton);
         };
         return div;
     };
     removeButton.addTo(map);
+    layerCount++;
 }
 
 function addAirplaneTrackingLayer() {
