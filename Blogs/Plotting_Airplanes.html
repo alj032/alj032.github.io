@@ -128,22 +128,31 @@ function addWeatherRadarLayer() {
         return;
     }
 
-    // RainViewer API endpoint
-    var weatherRadarUrl = 'https://api.rainviewer.com/public/weather-maps.json';
+    // National Weather Service API endpoint
+    var weatherRadarUrl = 'https://api.weather.gov/radar/stations';
 
     fetch(weatherRadarUrl)
         .then(function(response) {
             return response.json();
         })
         .then(function(data) {
-            // Get the latest weather radar tile URL from the API response
-            var tileUrl = data.radar.past.slice(-1)[0].path + '/256/{z}/{x}/{y}/2/1_1.png';
+            var radarStations = data.features;
 
-            // Create a tile layer for weather radar data
-            weatherRadarLayer = L.tileLayer(tileUrl, {
-                attribution: 'Weather Radar Data &copy; RainViewer',
-                opacity: 0.7
-            }).addTo(map);
+            var radarMarkers = [];
+
+            radarStations.forEach(function(station) {
+                var latitude = station.geometry.coordinates[1];
+                var longitude = station.geometry.coordinates[0];
+                var stationId = station.properties.stationIdentifier;
+                var stationName = station.properties.name;
+
+                var marker = L.marker([latitude, longitude]);
+                marker.bindPopup('<b>Station ID:</b> ' + stationId + '<br><b>Station Name:</b> ' + stationName);
+                radarMarkers.push(marker);
+            });
+
+            // Create a layer group for the radar markers
+            weatherRadarLayer = L.layerGroup(radarMarkers).addTo(map);
 
             // Create a remove button for the weather radar layer
             weatherRadarRemoveButton = L.control({position: 'topright'});
