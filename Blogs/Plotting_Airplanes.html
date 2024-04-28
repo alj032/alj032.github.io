@@ -94,6 +94,9 @@
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
+	var airplaneLayer = null;
+var airplaneRemoveButton = null;
+	
 	document.getElementById('addAirplaneTrackingButton').addEventListener('click', function() {
     addAirplaneTrackingLayer();
 });
@@ -216,6 +219,15 @@ function addGeoJsonLayer(data) {
 }
 
 function addAirplaneTrackingLayer() {
+    if (airplaneLayer) {
+        // If the airplane layer exists, remove it from the map
+        map.removeLayer(airplaneLayer);
+        map.removeControl(airplaneRemoveButton);
+        airplaneLayer = null;
+        airplaneRemoveButton = null;
+        return;
+    }
+
     // URL for fetching live airplane tracking data (replace with your own API endpoint)
     var airplaneTrackingUrl = 'https://opensky-network.org/api/states/all';
 
@@ -242,7 +254,7 @@ function addAirplaneTrackingLayer() {
                 var altitude = state[7] !== null ? state[7] + ' m' : 'N/A';
 
                 if (latitude !== null && longitude !== null) {
-                    var marker = L.marker([latitude, longitude], {icon: airplaneIcon}).addTo(map);
+                    var marker = L.marker([latitude, longitude], {icon: airplaneIcon});
                     marker.bindPopup(
                         '<b>Callsign:</b> ' + callsign +
                         '<br><b>Velocity:</b> ' + velocity +
@@ -253,20 +265,19 @@ function addAirplaneTrackingLayer() {
             });
 
             // Create a layer group for the airplane markers
-            var airplaneLayer = L.layerGroup(airplaneMarkers).addTo(map);
+            airplaneLayer = L.layerGroup(airplaneMarkers).addTo(map);
 
             // Create a remove button for the airplane layer
-            var removeButton = L.control({position: 'topright'});
-            removeButton.onAdd = function (map) {
+            airplaneRemoveButton = L.control({position: 'topright'});
+            airplaneRemoveButton.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'remove-button');
                 div.innerHTML = 'Remove Airplane Layer';
                 div.onclick = function() {
-                    map.removeLayer(airplaneLayer);
-                    map.removeControl(removeButton);
+                    addAirplaneTrackingLayer();
                 };
                 return div;
             };
-            removeButton.addTo(map);
+            airplaneRemoveButton.addTo(map);
         })
         .catch(function(error) {
             console.log('Error loading airplane tracking data:', error);
