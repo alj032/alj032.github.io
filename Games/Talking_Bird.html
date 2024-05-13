@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bird Game</title>
+  <style>
+	  body, html {
+	  margin: 0;
+	  padding: 0;
+	  width: 100%;
+	  height: 100%;
+	}
+
+	#game-container {
+	  width: 100%;
+	  height: 100%;
+	  background-image: url('path/to/your/pixel-art-background.png');
+	  background-size: cover;
+	  position: relative;
+	}
+
+	#bird {
+	  width: 50px;
+	  height: 50px;
+	  background-image: url('path/to/your/bird-image.png');
+	  background-size: cover;
+	  position: absolute;
+	  bottom: 100px;
+	  left: 100px;
+	}
+
+	#popup {
+	  position: absolute;
+	  bottom: 150px;
+	  left: 80px;
+	  background-color: white;
+	  padding: 10px;
+	  border-radius: 5px;
+	  opacity: 0;
+	  transition: opacity 0.5s;
+	}
+
+	#popup.visible {
+	  opacity: 1;
+	}
+
+	.hidden {
+	  display: none;
+	}
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="bird"></div>
+    <div id="popup" class="hidden">
+      <p>Hello! I'm a bird.</p>
+    </div>
+  </div>
+
+  <script>
+	  window.onload = function() {
+	  const bird = document.getElementById('bird');
+	  const popup = document.getElementById('popup');
+
+	  setTimeout(function() {
+		popup.classList.remove('hidden');
+		popup.classList.add('visible');
+	  }, 3000);
+	};
+  </script>
+</body>
+</html>
