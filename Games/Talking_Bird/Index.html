@@ -31,6 +31,13 @@
       { x: 300, y: 200, width: 200, height: 10 },
       { x: 600, y: 150, width: 200, height: 10 }
     ];
+	
+	const playerImage = new Image();
+    playerImage.src = './Images/player.gif'; // Replace with the path to your player image
+
+    const platformImage = new Image();
+    platformImage.src = './Images/platform.gif'; // Replace with the path to your platform image
+
 
     const keys = {};
 
@@ -76,13 +83,11 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw the player
-      ctx.fillStyle = 'blue';
-      ctx.fillRect(player.x, player.y, player.width, player.height);
+      ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
 
       // Draw the platforms
-      ctx.fillStyle = 'green';
       platforms.forEach(platform => {
-        ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        ctx.drawImage(platformImage, platform.x, platform.y, platform.width, platform.height);
       });
     }
 
