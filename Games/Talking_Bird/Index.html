@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bird Game</title>
+</head>
+<body>
+  <script>
+  // Define the spritesheet properties
+const spritesheet = {
+  image: new Image(),
+  width: 640,
+  height: 480,
+  columns: 4,
+  rows: 3,
+  frameWidth: 160,
+  frameHeight: 160
+};
+
+// Load the spritesheet image
+spritesheet.image.src = 'Images/birdflyingsprite.png';
+
+// Create a canvas element
+const canvas = document.createElement('canvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+document.body.appendChild(canvas);
+
+// Get the 2D rendering context
+const ctx = canvas.getContext('2d');
+
+// Define the sprite properties
+const sprite = {
+  x: canvas.width / 2 - spritesheet.frameWidth / 2,
+  y: canvas.height / 2 - spritesheet.frameHeight / 2,
+  speed: 5,
+  frameX: 0,
+  frameY: 0
+};
+
+// Function to draw the sprite
+function drawSprite() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(
+    spritesheet.image,
+    sprite.frameX * spritesheet.frameWidth,
+    sprite.frameY * spritesheet.frameHeight,
+    spritesheet.frameWidth,
+    spritesheet.frameHeight,
+    sprite.x,
+    sprite.y,
+    spritesheet.frameWidth,
+    spritesheet.frameHeight
+  );
+}
+
+// Function to handle keyboard events
+function handleKeyDown(event) {
+  switch (event.keyCode) {
+    case 87: // W key
+      sprite.y -= sprite.speed;
+      break;
+    case 83: // S key
+      sprite.y += sprite.speed;
+      break;
+    case 65: // A key
+      sprite.x -= sprite.speed;
+      break;
+    case 68: // D key
+      sprite.x += sprite.speed;
+      break;
+  }
+}
+
+// Add event listener for keydown events
+document.addEventListener('keydown', handleKeyDown);
+
+// Game loop
+function gameLoop() {
+  drawSprite();
+  requestAnimationFrame(gameLoop);
+}
+
+// Start the game loop
+gameLoop();
+  </script>
+</body>
+</html>
