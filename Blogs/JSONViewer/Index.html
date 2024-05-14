@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JSON Analyzer and Plotter</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>JSON Analyzer and Plotter</h1>
+    <textarea id="jsonInput" rows="10" cols="50"></textarea>
+    <button onclick="analyzeJSON()">Analyze JSON</button>
+    <div id="jsonInfo"></div>
+    <div>
+        <label for="propertySelect">Select Property:</label>
+        <select id="propertySelect"></select>
+        <button onclick="plotProperty()">Plot Property</button>
+    </div>
+    <canvas id="chart"></canvas>
+
+    <script>
+        let jsonData;
+
+        function analyzeJSON() {
+            const jsonInput = document.getElementById('jsonInput').value;
+            jsonData = JSON.parse(jsonInput);
+            displayJSONInfo();
+            populatePropertySelect();
+        }
+
+        function displayJSONInfo() {
+            const jsonInfo = document.getElementById('jsonInfo');
+            jsonInfo.innerHTML = `
+                <p>Number of Properties: ${Object.keys(jsonData).length}</p>
+                <p>Properties: ${Object.keys(jsonData).join(', ')}</p>
+            `;
+        }
+
+        function populatePropertySelect() {
+            const propertySelect = document.getElementById('propertySelect');
+            propertySelect.innerHTML = '';
+            for (const prop in jsonData) {
+                const option = document.createElement('option');
+                option.value = prop;
+                option.text = prop;
+                propertySelect.appendChild(option);
+            }
+        }
+
+        function plotProperty() {
+            const propertySelect = document.getElementById('propertySelect');
+            const selectedProperty = propertySelect.value;
+            const propertyData = jsonData[selectedProperty];
+
+            const ctx = document.getElementById('chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(propertyData),
+                    datasets: [{
+                        label: selectedProperty,
+                        data: Object.values(propertyData),
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
