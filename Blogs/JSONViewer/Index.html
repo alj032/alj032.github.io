@@ -26,11 +26,28 @@
             populatePropertySelect();
         }
 
+        function getAllKeys(obj, prefix = '') {
+            let keys = [];
+            for (const key in obj) {
+                if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    const nestedKeys = getAllKeys(obj[key], prefix + key + '.');
+                    keys = keys.concat(nestedKeys);
+                } else {
+                    keys.push(prefix + key);
+                }
+            }
+            return keys;
+        }
+
         function displayJSONInfo() {
             const jsonInfo = document.getElementById('jsonInfo');
+            const allKeys = getAllKeys(jsonData);
             jsonInfo.innerHTML = `
-                <p>Number of Properties: ${Object.keys(jsonData).length}</p>
-                <p>Properties: ${Object.keys(jsonData).join(', ')}</p>
+                <p>Number of Keys: ${allKeys.length}</p>
+                <p>Keys:</p>
+                <ul>
+                    ${allKeys.map(key => `<li>${key}</li>`).join('')}
+                </ul>
             `;
         }
 
