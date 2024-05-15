@@ -1,229 +1,169 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Platform Game</title>	
-	<style>
-    body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
+  <title>Circle Shooter Game</title>
+  <style>
+    canvas {
+      border: 1px solid black;
     }
-    
-    #gameCanvas {
-        display: block;
-		border: 1px solid black;
-    }
-</style>
+  </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
-    <p>Falls: <span id="fallsCount">0</span></p>
-    <p>Times Shot: <span id="timesShot">0</span></p>
-    <script>
-	
-	function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <p>Score: <span id="scoreDisplay">0</span></p>
+
+  <script>
+  const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+const ctx = canvas.getContext('2d');
+const scoreDisplay = document.getElementById('scoreDisplay');
+
+let score = 0;
+let gameOver = false;
+
+class Player {
+  x: number;
+  y: number;
+  radius: number;
+
+  constructor(x: number, y: number, radius: number) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'blue';
+    ctx.fill();
+    ctx.closePath();
+  }
 }
 
-// Call the resizeCanvas function initially
-resizeCanvas();
+class Enemy {
+  x: number;
+  y: number;
+  radius: number;
+  speed: number;
 
-// Add an event listener to handle window resizing
-window.addEventListener('resize', resizeCanvas);
+  constructor(x: number, y: number, radius: number, speed: number) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.speed = speed;
+  }
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const fallsCountElement = document.getElementById('fallsCount');
-        const timesShotElement = document.getElementById('timesShot');
-		
-		let fallsCount = 0;
-    let timesShot = 0;
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'red';
+    ctx.fill();
+    ctx.closePath();
+  }
 
-	const player = {
-		x: 50,
-		y: canvas.height - 200,
-		width: 30,
-		height: 50,
-		speed: 5,
-		velX: 0,
-		velY: 0,
-		jumping: false
-	};
+  update() {
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const angle = Math.atan2(dy, dx);
+    this.x += Math.cos(angle) * this.speed;
+    this.y += Math.sin(angle) * this.speed;
+  }
+}
 
-	const enemy = {
-		x: canvas.width - 100,
-		y: canvas.height - 300,
-		width: 30,
-		height: 50,
-		speed: 2,
-		direction: -1
-	};
+class Bullet {
+  x: number;
+  y: number;
+  radius: number;
+  speed: number;
+  angle: number;
 
-	// Update the enemy's movement range
-	if (enemy.x <= (canvas.width / 3) * 2 || enemy.x + enemy.width >= canvas.width) {
-		enemy.direction *= -1;
-	}
+  constructor(x: number, y: number, radius: number, speed: number, angle: number) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.speed = speed;
+    this.angle = angle;
+  }
 
-    const laser = {
-        x: enemy.x,
-        y: enemy.y + enemy.height / 2,
-        width: 10,
-        height: 5,
-        speed: 5,
-        active: false
-    };
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'black';
+    ctx.fill();
+    ctx.closePath();
+  }
 
-	const platforms = [
-		{ x: 0, y: canvas.height - 150, width: canvas.width / 3, height: 10 },
-		{ x: canvas.width / 3, y: canvas.height - 200, width: canvas.width / 3, height: 10 },
-		{ x: (canvas.width / 3) * 2, y: canvas.height - 250, width: canvas.width / 3, height: 10 }
-	];
+  update() {
+    this.x += Math.cos(this.angle) * this.speed;
+    this.y += Math.sin(this.angle) * this.speed;
+  }
+}
 
-    const keys = {};
+const player = new Player(canvas.width / 2, canvas.height / 2, 20);
+const enemies: Enemy[] = [];
+const bullets: Bullet[] = [];
 
-    function update() {
-        // Move the player horizontally
-        player.x += player.velX;
+function spawnEnemy() {
+  const x = Math.random() < 0.5 ? 0 - 30 : canvas.width + 30;
+  const y = Math.random() * canvas.height;
+  const radius = 15;
+  const speed = 1;
+  enemies.push(new Enemy(x, y, radius, speed));
+}
 
-        // Apply gravity
-        player.velY += 1;
-        player.y += player.velY;
+canvas.addEventListener('click', (event) => {
+  const angle = Math.atan2(event.clientY - player.y, event.clientX - player.x);
+  const bullet = new Bullet(player.x, player.y, 5, 10, angle);
+  bullets.push(bullet);
+});
 
-        // Check for collision with platforms
-        platforms.forEach(platform => {
-            if (
-                player.y + player.height > platform.y &&
-                player.y < platform.y + platform.height &&
-                player.x + player.width > platform.x &&
-                player.x < platform.x + platform.width
-            ) {
-                player.y = platform.y - player.height;
-                player.velY = 0;
-                player.jumping = false;
-            }
-        });
+function detectCollision(obj1: { x: number; y: number; radius: number }, obj2: { x: number; y: number; radius: number }) {
+  const dx = obj1.x - obj2.x;
+  const dy = obj1.y - obj2.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  return distance < obj1.radius + obj2.radius;
+}
 
-        // Keep the player within canvas bounds
-        if (player.x < 0) {
-            player.x = 0;
-        } else if (player.x + player.width > canvas.width) {
-            player.x = canvas.width - player.width;
-        }
+function update() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Reset player position if falling off the canvas
-        if (player.y > canvas.height) {
-            player.x = 50;
-            player.y = 200;
-            player.velY = 0;
-            fallsCount++;
-            fallsCountElement.textContent = fallsCount;
-        }
+  player.draw();
 
-        // Move the enemy
-        enemy.x += enemy.speed * enemy.direction;
+  enemies.forEach((enemy, enemyIndex) => {
+    enemy.update();
+    enemy.draw();
 
-        // Reverse enemy direction if it reaches the edges of the platform
-        if (enemy.x <= 600 || enemy.x + enemy.width >= 800) {
-            enemy.direction *= -1;
-        }
-
-        // Shoot laser periodically
-        if (!laser.active && Math.random() < 0.01) {
-            laser.x = enemy.x;
-            laser.y = enemy.y + enemy.height / 2;
-            laser.active = true;
-        }
-
-        // Move the laser
-        if (laser.active) {
-            laser.x -= laser.speed;
-
-            // Check for collision with the player
-            if (
-                laser.x < player.x + player.width &&
-                laser.x + laser.width > player.x &&
-                laser.y < player.y + player.height &&
-                laser.y + laser.height > player.y
-            ) {
-                player.x = 50;
-                player.y = 200;
-                player.velY = 0;
-                timesShot++;
-                timesShotElement.textContent = timesShot;
-                laser.active = false;
-            }
-
-            // Remove the laser if it goes off-screen
-            if (laser.x < 0) {
-                laser.active = false;
-            }
-        }
+    if (detectCollision(player, enemy)) {
+      gameOver = true;
     }
 
-    function draw() {
-        // Clear the canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    bullets.forEach((bullet, bulletIndex) => {
+      if (detectCollision(bullet, enemy)) {
+        enemies.splice(enemyIndex, 1);
+        bullets.splice(bulletIndex, 1);
+        score++;
+        scoreDisplay.textContent = score.toString();
+      }
+    });
+  });
 
-        // Draw the player
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
+  bullets.forEach((bullet) => {
+    bullet.update();
+    bullet.draw();
+  });
 
-        // Draw the enemy
-        ctx.fillStyle = 'red';
-        ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+  if (Math.random() < 0.02) {
+    spawnEnemy();
+  }
 
-        // Draw the laser
-        if (laser.active) {
-            ctx.fillStyle = 'orange';
-            ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
-        }
+  if (!gameOver) {
+    requestAnimationFrame(update);
+  } else {
+    alert('Game Over! Your score: ' + score);
+  }
+}
 
-        // Draw the platforms
-        ctx.fillStyle = 'green';
-        platforms.forEach(platform => {
-            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-        });
-    }
-
-    function loop() {
-        update();
-        draw();
-        requestAnimationFrame(loop);
-    }
-
-    function keyDown(e) {
-        keys[e.keyCode] = true;
-    }
-
-    function keyUp(e) {
-        keys[e.keyCode] = false;
-    }
-
-    document.addEventListener('keydown', keyDown);
-    document.addEventListener('keyup', keyUp);
-
-    function movePlayer() {
-        player.velX = 0;
-        if (keys[65] || keys[37]) { // A or Left Arrow
-            player.velX = -player.speed;
-        }
-        if (keys[68] || keys[39]) { // D or Right Arrow
-            player.velX = player.speed;
-        }
-        if ((keys[87] || keys[38] || keys[32]) && !player.jumping) { // W or Up Arrow or Space
-            player.velY = -15;
-            player.jumping = true;
-        }
-    }
-
-    function gameLoop() {
-        movePlayer();
-        requestAnimationFrame(gameLoop);
-    }
-
-    loop();
-    gameLoop();
-</script>
+update();
+  </script>
 </body>
 </html>
