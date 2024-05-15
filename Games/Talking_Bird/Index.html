@@ -1,18 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Platform Game</title>
-    <style>
-        #gameCanvas {
-            border: 1px solid black;
-        }
-    </style>
+    <title>Platform Game</title>	
+	<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+    
+    #gameCanvas {
+        display: block;
+		border: 1px solid black;
+    }
+</style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" width="1200" height="800"></canvas>
     <p>Falls: <span id="fallsCount">0</span></p>
     <p>Times Shot: <span id="timesShot">0</span></p>
     <script>
+	
+	function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+// Call the resizeCanvas function initially
+resizeCanvas();
+
+// Add an event listener to handle window resizing
+window.addEventListener('resize', resizeCanvas);
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const fallsCountElement = document.getElementById('fallsCount');
@@ -21,25 +40,30 @@
 		let fallsCount = 0;
     let timesShot = 0;
 
-    const player = {
-        x: 50,
-        y: 200,
-        width: 30,
-        height: 50,
-        speed: 5,
-        velX: 0,
-        velY: 0,
-        jumping: false
-    };
+	const player = {
+		x: 50,
+		y: canvas.height - 200,
+		width: 30,
+		height: 50,
+		speed: 5,
+		velX: 0,
+		velY: 0,
+		jumping: false
+	};
 
-    const enemy = {
-        x: 700,
-        y: 150,
-        width: 30,
-        height: 50,
-        speed: 2,
-        direction: -1
-    };
+	const enemy = {
+		x: canvas.width - 100,
+		y: canvas.height - 300,
+		width: 30,
+		height: 50,
+		speed: 2,
+		direction: -1
+	};
+
+	// Update the enemy's movement range
+	if (enemy.x <= (canvas.width / 3) * 2 || enemy.x + enemy.width >= canvas.width) {
+		enemy.direction *= -1;
+	}
 
     const laser = {
         x: enemy.x,
@@ -50,11 +74,11 @@
         active: false
     };
 
-    const platforms = [
-        { x: 0, y: 250, width: 200, height: 10 },
-        { x: 300, y: 200, width: 200, height: 10 },
-        { x: 600, y: 150, width: 200, height: 10 }
-    ];
+	const platforms = [
+		{ x: 0, y: canvas.height - 150, width: canvas.width / 3, height: 10 },
+		{ x: canvas.width / 3, y: canvas.height - 200, width: canvas.width / 3, height: 10 },
+		{ x: (canvas.width / 3) * 2, y: canvas.height - 250, width: canvas.width / 3, height: 10 }
+	];
 
     const keys = {};
 
