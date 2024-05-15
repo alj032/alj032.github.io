@@ -13,157 +13,142 @@
   <p>Score: <span id="scoreDisplay">0</span></p>
 
   <script>
-  const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d');
-const scoreDisplay = document.getElementById('scoreDisplay');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('scoreDisplay');
 
-let score = 0;
-let gameOver = false;
+    let score = 0;
+    let gameOver = false;
 
-class Player {
-  x: number;
-  y: number;
-  radius: number;
+    class Player {
+      constructor(x, y, radius) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+      }
 
-  constructor(x: number, y: number, radius: number) {
-    this.x = x;
-    this.y = y;
-    this.radius = radius;
-  }
-
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'blue';
-    ctx.fill();
-    ctx.closePath();
-  }
-}
-
-class Enemy {
-  x: number;
-  y: number;
-  radius: number;
-  speed: number;
-
-  constructor(x: number, y: number, radius: number, speed: number) {
-    this.x = x;
-    this.y = y;
-    this.radius = radius;
-    this.speed = speed;
-  }
-
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'red';
-    ctx.fill();
-    ctx.closePath();
-  }
-
-  update() {
-    const dx = player.x - this.x;
-    const dy = player.y - this.y;
-    const angle = Math.atan2(dy, dx);
-    this.x += Math.cos(angle) * this.speed;
-    this.y += Math.sin(angle) * this.speed;
-  }
-}
-
-class Bullet {
-  x: number;
-  y: number;
-  radius: number;
-  speed: number;
-  angle: number;
-
-  constructor(x: number, y: number, radius: number, speed: number, angle: number) {
-    this.x = x;
-    this.y = y;
-    this.radius = radius;
-    this.speed = speed;
-    this.angle = angle;
-  }
-
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'black';
-    ctx.fill();
-    ctx.closePath();
-  }
-
-  update() {
-    this.x += Math.cos(this.angle) * this.speed;
-    this.y += Math.sin(this.angle) * this.speed;
-  }
-}
-
-const player = new Player(canvas.width / 2, canvas.height / 2, 20);
-const enemies: Enemy[] = [];
-const bullets: Bullet[] = [];
-
-function spawnEnemy() {
-  const x = Math.random() < 0.5 ? 0 - 30 : canvas.width + 30;
-  const y = Math.random() * canvas.height;
-  const radius = 15;
-  const speed = 1;
-  enemies.push(new Enemy(x, y, radius, speed));
-}
-
-canvas.addEventListener('click', (event) => {
-  const angle = Math.atan2(event.clientY - player.y, event.clientX - player.x);
-  const bullet = new Bullet(player.x, player.y, 5, 10, angle);
-  bullets.push(bullet);
-});
-
-function detectCollision(obj1: { x: number; y: number; radius: number }, obj2: { x: number; y: number; radius: number }) {
-  const dx = obj1.x - obj2.x;
-  const dy = obj1.y - obj2.y;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  return distance < obj1.radius + obj2.radius;
-}
-
-function update() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  player.draw();
-
-  enemies.forEach((enemy, enemyIndex) => {
-    enemy.update();
-    enemy.draw();
-
-    if (detectCollision(player, enemy)) {
-      gameOver = true;
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+        ctx.closePath();
+      }
     }
 
-    bullets.forEach((bullet, bulletIndex) => {
-      if (detectCollision(bullet, enemy)) {
-        enemies.splice(enemyIndex, 1);
-        bullets.splice(bulletIndex, 1);
-        score++;
-        scoreDisplay.textContent = score.toString();
+    class Enemy {
+      constructor(x, y, radius, speed) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.speed = speed;
       }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      update() {
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const angle = Math.atan2(dy, dx);
+        this.x += Math.cos(angle) * this.speed;
+        this.y += Math.sin(angle) * this.speed;
+      }
+    }
+
+    class Bullet {
+      constructor(x, y, radius, speed, angle) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.speed = speed;
+        this.angle = angle;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'black';
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+      }
+    }
+
+    const player = new Player(canvas.width / 2, canvas.height / 2, 20);
+    const enemies = [];
+    const bullets = [];
+
+    function spawnEnemy() {
+      const x = Math.random() < 0.5 ? 0 - 30 : canvas.width + 30;
+      const y = Math.random() * canvas.height;
+      const radius = 15;
+      const speed = 1;
+      enemies.push(new Enemy(x, y, radius, speed));
+    }
+
+    canvas.addEventListener('click', (event) => {
+      const angle = Math.atan2(event.clientY - player.y, event.clientX - player.x);
+      const bullet = new Bullet(player.x, player.y, 5, 10, angle);
+      bullets.push(bullet);
     });
-  });
 
-  bullets.forEach((bullet) => {
-    bullet.update();
-    bullet.draw();
-  });
+    function detectCollision(obj1, obj2) {
+      const dx = obj1.x - obj2.x;
+      const dy = obj1.y - obj2.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return distance < obj1.radius + obj2.radius;
+    }
 
-  if (Math.random() < 0.02) {
-    spawnEnemy();
-  }
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  if (!gameOver) {
-    requestAnimationFrame(update);
-  } else {
-    alert('Game Over! Your score: ' + score);
-  }
-}
+      player.draw();
 
-update();
+      enemies.forEach((enemy, enemyIndex) => {
+        enemy.update();
+        enemy.draw();
+
+        if (detectCollision(player, enemy)) {
+          gameOver = true;
+        }
+
+        bullets.forEach((bullet, bulletIndex) => {
+          if (detectCollision(bullet, enemy)) {
+            enemies.splice(enemyIndex, 1);
+            bullets.splice(bulletIndex, 1);
+            score++;
+            scoreDisplay.textContent = score;
+          }
+        });
+      });
+
+      bullets.forEach((bullet) => {
+        bullet.update();
+        bullet.draw();
+      });
+
+      if (Math.random() < 0.02) {
+        spawnEnemy();
+      }
+
+      if (!gameOver) {
+        requestAnimationFrame(update);
+      } else {
+        alert('Game Over! Your score: ' + score);
+      }
+    }
+
+    update();
   </script>
 </body>
 </html>
