@@ -9,6 +9,7 @@
     <textarea id="jsonInput" rows="10" cols="50"></textarea>
     <button onclick="analyzeJSON()">Analyze JSON</button>
     <div id="jsonInfo"></div>
+    <div id="errorMessage" style="color: red;"></div>
     <div>
         <label for="propertySelect">Select Property:</label>
         <select id="propertySelect"></select>
@@ -21,9 +22,16 @@
 
         function analyzeJSON() {
             const jsonInput = document.getElementById('jsonInput').value;
-            jsonData = JSON.parse(jsonInput);
-            displayJSONInfo();
-            populatePropertySelect();
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = '';
+
+            try {
+                jsonData = JSON.parse(jsonInput);
+                displayJSONInfo();
+                populatePropertySelect();
+            } catch (error) {
+                errorMessage.textContent = 'Invalid JSON format. Please enter valid JSON data.';
+            }
         }
 
         function getAllKeys(obj, prefix = '') {
