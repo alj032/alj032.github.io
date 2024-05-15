@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Platform Game</title>
-  <style>
-    #gameCanvas {
-      border: 1px solid black;
-    }
-  </style>
+    <title>Platform Game</title>
+    <style>
+        #gameCanvas {
+            border: 1px solid black;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="800" height="400"></canvas>
-
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    let fallsCount = 0;
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <p>Falls: <span id="fallsCount">0</span></p>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const fallsCountElement = document.getElementById('fallsCount');
+		let fallsCount = 0;
 
     const player = {
         x: 50,
