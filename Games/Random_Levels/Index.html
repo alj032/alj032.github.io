@@ -35,6 +35,7 @@ let finish = {
     color: 'green'
 };
 
+let lasers = [];
 let level = [];
 
 function generateRandomLevel() {
@@ -49,6 +50,24 @@ function generateRandomLevel() {
     // Ensure the player start position and finish line are free of obstacles
     level[player.y][player.x] = 0;
     level[finish.y][finish.x] = 0;
+    generateLasers();
+}
+
+function generateLasers() {
+    lasers = [];
+    for (let i = 0; i < 5; i++) { // Create 5 lasers for the level
+        let laser = {
+            x: Math.floor(Math.random() * numCols),
+            y: Math.floor(Math.random() * numRows),
+            direction: Math.random() > 0.5 ? 'horizontal' : 'vertical',
+            active: true
+        };
+        if (level[laser.y][laser.x] === 0 && !(laser.x === player.x && laser.y === player.y) && !(laser.x === finish.x && laser.y === finish.y)) {
+            lasers.push(laser);
+        } else {
+            i--; // Regenerate the laser if it overlaps with player or finish
+        }
+    }
 }
 
 function drawLevel() {
@@ -73,6 +92,15 @@ function drawFinish() {
     ctx.fillRect(finish.x * tileSize, finish.y * tileSize, tileSize, tileSize);
 }
 
+function drawLasers() {
+    ctx.fillStyle = 'red';
+    lasers.forEach(laser => {
+        if (laser.active) {
+            ctx.fillRect(laser.x * tileSize, laser.y * tileSize, tileSize, tileSize);
+        }
+    });
+}
+
 function movePlayer(dx, dy) {
     let newX = player.x + dx;
     let newY = player.y + dy;
@@ -80,16 +108,44 @@ function movePlayer(dx, dy) {
         player.x = newX;
         player.y = newY;
         checkWin();
+        checkLaserHit();
     }
 }
 
 function checkWin() {
     if (player.x === finish.x && player.y === finish.y) {
         alert("Congratulations! You've reached the finish line!");
-        generateRandomLevel();
-        player.x = 0;
-        player.y = 0;
+        resetGame();
     }
+}
+
+function checkLaserHit() {
+    lasers.forEach(laser => {
+        if (laser.active && laser.x === player.x && laser.y === player.y) {
+            alert("You were hit by a laser! Game over.");
+            resetGame();
+        }
+    });
+}
+
+function moveLasers() {
+    lasers.forEach(laser => {
+        if (laser.direction === 'horizontal') {
+            laser.x += 1;
+            if (laser.x >= numCols) laser.x = 0;
+        } else {
+            laser.y += 1;
+            if (laser.y >= numRows) laser.y = 0;
+        }
+        checkLaserHit();
+    });
+}
+
+function resetGame() {
+    generateRandomLevel();
+    player.x = 0;
+    player.y = 0;
+    drawGame();
 }
 
 function handleKeydown(event) {
@@ -113,6 +169,7 @@ function handleKeydown(event) {
 function drawGame() {
     drawLevel();
     drawFinish();
+    drawLasers();
     drawPlayer();
 }
 
@@ -120,6 +177,7 @@ document.addEventListener('keydown', handleKeydown);
 
 generateRandomLevel();
 drawGame();
+setInterval(moveLasers, 500); // Move lasers every 500ms
 
 
 </script>
