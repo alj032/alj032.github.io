@@ -29,6 +29,12 @@ let player = {
     color: 'blue'
 };
 
+let finish = {
+    x: numCols - 1,
+    y: numRows - 1,
+    color: 'green'
+};
+
 let level = [];
 
 function generateRandomLevel() {
@@ -40,8 +46,9 @@ function generateRandomLevel() {
         }
         level.push(newRow);
     }
-    // Ensure the player start position is always free of obstacles
+    // Ensure the player start position and finish line are free of obstacles
     level[player.y][player.x] = 0;
+    level[finish.y][finish.x] = 0;
 }
 
 function drawLevel() {
@@ -61,12 +68,27 @@ function drawPlayer() {
     ctx.fillRect(player.x * tileSize, player.y * tileSize, tileSize, tileSize);
 }
 
+function drawFinish() {
+    ctx.fillStyle = finish.color;
+    ctx.fillRect(finish.x * tileSize, finish.y * tileSize, tileSize, tileSize);
+}
+
 function movePlayer(dx, dy) {
     let newX = player.x + dx;
     let newY = player.y + dy;
     if (newX >= 0 && newX < numCols && newY >= 0 && newY < numRows && level[newY][newX] === 0) {
         player.x = newX;
         player.y = newY;
+        checkWin();
+    }
+}
+
+function checkWin() {
+    if (player.x === finish.x && player.y === finish.y) {
+        alert("Congratulations! You've reached the finish line!");
+        generateRandomLevel();
+        player.x = 0;
+        player.y = 0;
     }
 }
 
@@ -90,6 +112,7 @@ function handleKeydown(event) {
 
 function drawGame() {
     drawLevel();
+    drawFinish();
     drawPlayer();
 }
 
@@ -97,6 +120,7 @@ document.addEventListener('keydown', handleKeydown);
 
 generateRandomLevel();
 drawGame();
+
 
 </script>
 </body>
