@@ -50,24 +50,7 @@ function generateRandomLevel() {
     // Ensure the player start position and finish line are free of obstacles
     level[player.y][player.x] = 0;
     level[finish.y][finish.x] = 0;
-    generateLasers();
-}
-
-function generateLasers() {
-    lasers = [];
-    for (let i = 0; i < 5; i++) { // Create 5 lasers for the level
-        let laser = {
-            x: Math.floor(Math.random() * numCols),
-            y: Math.floor(Math.random() * numRows),
-            direction: Math.random() > 0.5 ? 'horizontal' : 'vertical',
-            active: true
-        };
-        if (level[laser.y][laser.x] === 0 && !(laser.x === player.x && laser.y === player.y) && !(laser.x === finish.x && laser.y === finish.y)) {
-            lasers.push(laser);
-        } else {
-            i--; // Regenerate the laser if it overlaps with player or finish
-        }
-    }
+    lasers = []; // Clear any existing lasers
 }
 
 function drawLevel() {
@@ -95,9 +78,7 @@ function drawFinish() {
 function drawLasers() {
     ctx.fillStyle = 'red';
     lasers.forEach(laser => {
-        if (laser.active) {
-            ctx.fillRect(laser.x * tileSize, laser.y * tileSize, tileSize, tileSize);
-        }
+        ctx.fillRect(laser.x * tileSize, laser.y * tileSize, tileSize, tileSize);
     });
 }
 
@@ -121,7 +102,7 @@ function checkWin() {
 
 function checkLaserHit() {
     lasers.forEach(laser => {
-        if (laser.active && laser.x === player.x && laser.y === player.y) {
+        if (laser.x === player.x && laser.y === player.y) {
             alert("You were hit by a laser! Game over.");
             resetGame();
         }
@@ -129,16 +110,57 @@ function checkLaserHit() {
 }
 
 function moveLasers() {
-    lasers.forEach(laser => {
+    lasers.forEach((laser, index) => {
         if (laser.direction === 'horizontal') {
-            laser.x += 1;
-            if (laser.x >= numCols) laser.x = 0;
+            laser.x += laser.speed;
+            if (laser.x < 0 || laser.x >= numCols) lasers.splice(index, 1);
         } else {
-            laser.y += 1;
-            if (laser.y >= numRows) laser.y = 0;
+            laser.y += laser.speed;
+            if (laser.y < 0 || laser.y >= numRows) lasers.splice(index, 1);
         }
         checkLaserHit();
     });
+}
+
+function fireLaser() {
+    const startSide = Math.floor(Math.random() * 4);
+    let laser = {
+        x: 0,
+        y: 0,
+        direction: '',
+        speed: 1
+    };
+
+    switch (startSide) {
+        case 0: // Fire from left to right
+            laser.x = 0;
+            laser.y = Math.floor(Math.random() * numRows);
+            laser.direction = 'horizontal';
+            laser.speed = 1;
+            break;
+        case 1: // Fire from right to left
+            laser.x = numCols - 1;
+            laser.y = Math.floor(Math.random() * numRows);
+            laser.direction = 'horizontal';
+            laser.speed = -1;
+            break;
+        case 2: // Fire from top to bottom
+            laser.x = Math.floor(Math.random() * numCols);
+            laser.y = 0;
+            laser.direction = 'vertical';
+            laser.speed = 1;
+            break;
+        case 3: // Fire from bottom to top
+            laser.x = Math.floor(Math.random() * numCols);
+            laser.y = numRows - 1;
+            laser.direction = 'vertical';
+            laser.speed = -1;
+            break;
+    }
+
+    if (level[laser.y][laser.x] === 0 && !(laser.x === player.x && laser.y === player.y) && !(laser.x === finish.x && laser.y === finish.y)) {
+        lasers.push(laser);
+    }
 }
 
 function resetGame() {
@@ -177,9 +199,8 @@ document.addEventListener('keydown', handleKeydown);
 
 generateRandomLevel();
 drawGame();
-setInterval(moveLasers, 500); // Move lasers every 500ms
-
-
+setInterval(moveLasers, 100); // Move lasers every 100ms
+setInterval(fireLaser, 2000); // Fire a laser every 2 seconds
 </script>
 </body>
 </html>
