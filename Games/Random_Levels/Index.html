@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Level Game</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const tileSize = 40;
+const numRows = canvas.height / tileSize;
+const numCols = canvas.width / tileSize;
+
+let player = {
+    x: 0,
+    y: 0,
+    color: 'blue'
+};
+
+let level = [];
+
+function generateRandomLevel() {
+    level = [];
+    for (let row = 0; row < numRows; row++) {
+        let newRow = [];
+        for (let col = 0; col < numCols; col++) {
+            newRow.push(Math.random() > 0.8 ? 1 : 0); // 20% chance to place an obstacle
+        }
+        level.push(newRow);
+    }
+    // Ensure the player start position is always free of obstacles
+    level[player.y][player.x] = 0;
+}
+
+function drawLevel() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let row = 0; row < numRows; row++) {
+        for (let col = 0; col < numCols; col++) {
+            if (level[row][col] === 1) {
+                ctx.fillStyle = 'black';
+                ctx.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
+            }
+        }
+    }
+}
+
+function drawPlayer() {
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x * tileSize, player.y * tileSize, tileSize, tileSize);
+}
+
+function movePlayer(dx, dy) {
+    let newX = player.x + dx;
+    let newY = player.y + dy;
+    if (newX >= 0 && newX < numCols && newY >= 0 && newY < numRows && level[newY][newX] === 0) {
+        player.x = newX;
+        player.y = newY;
+    }
+}
+
+function handleKeydown(event) {
+    switch (event.key) {
+        case 'w':
+            movePlayer(0, -1);
+            break;
+        case 'a':
+            movePlayer(-1, 0);
+            break;
+        case 's':
+            movePlayer(0, 1);
+            break;
+        case 'd':
+            movePlayer(1, 0);
+            break;
+    }
+    drawGame();
+}
+
+function drawGame() {
+    drawLevel();
+    drawPlayer();
+}
+
+document.addEventListener('keydown', handleKeydown);
+
+generateRandomLevel();
+drawGame();
+
+</script>
+</body>
+</html>
