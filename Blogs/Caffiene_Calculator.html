@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Caffeine, Water, and Deforestation Calculator</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+        <style>
+body {
+            font-family: Arial, sans-serif;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            box-sizing: border-box;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result, #waterResult, #deforestationResult {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+        canvas {
+            width: 100%;
+            max-width: 800px;
+            height: 400px;
+            margin: 20px auto;
+            display: block;
+        }
+        #coffeeCups {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .coffee-cup {
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+        .coffee-cup.active {
+            opacity: 1;
+        }
+        #waterVisualization {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 200px;
+            margin-top: 20px;
+        }
+        .water-bar {
+            width: 100px;
+            background-color: #3498db;
+            margin: 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+        }
+        .water-label {
+            margin-top: 10px;
+            text-align: center;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        </style>
+    </head>
+<body>
+    <h1>Caffeine, Water, and Deforestation Calculator</h1>
+    <div id="coffeeCups">
+        <img src="/images/coffee-mug-vector-icon.jpg" alt="Coffee Cup 1" class="coffee-cup" data-cups="1">
+        <img src="/images/coffee-mug-vector-icon.jpg" alt="Coffee Cup 2" class="coffee-cup" data-cups="2">
+        <img src="/images/coffee-mug-vector-icon.jpg" alt="Coffee Cup 3" class="coffee-cup" data-cups="3">
+        <img src="/images/coffee-mug-vector-icon.jpg" alt="Coffee Cup 4" class="coffee-cup" data-cups="4">
+        <img src="/images/coffee-mug-vector-icon.jpg" alt="Coffee Cup 5" class="coffee-cup" data-cups="5">
+    </div>
+    <form id="caffeineForm">
+        <label for="caffeine">Amount of caffeine (in mg):</label>
+        <input type="number" id="caffeine" min="0" step="1" required>
+        
+        <label for="consumptionTime">Time of last caffeine consumption:</label>
+        <input type="time" id="consumptionTime" required>
+        
+        <label for="bedtime">Bedtime:</label>
+        <input type="time" id="bedtime" required>
+        
+        <button type="submit">Calculate</button>
+    </form>
+    <div id="result"></div>
+    <canvas id="caffeineGraph"></canvas>
+    <h2>Water Consumption</h2>
+    <div id="waterResult"></div>
+    <div id="waterVisualization"></div>
+    <h2>Deforestation Impact</h2>
+    <div id="deforestationResult"></div>
+    <div id="map"></div>
+
+    <script>
+        let selectedCups = 0;
+        const coffeeCups = document.querySelectorAll('.coffee-cup');
+        const caffeineInput = document.getElementById('caffeine');
+        
+        coffeeCups.forEach(cup => {
+            cup.addEventListener('click', () => {
+                selectedCups = parseInt(cup.dataset.cups);
+                updateCups();
+                caffeineInput.value = selectedCups * 100;
+            });
+        });
+
+        caffeineInput.addEventListener('input', () => {
+            const caffeineAmount = parseInt(caffeineInput.value);
+            selectedCups = Math.round(caffeineAmount / 100);
+            updateCups();
+        });
+
+        function updateCups() {
+            coffeeCups.forEach((cup, index) => {
+                if (index < selectedCups) {
+                    cup.classList.add('active');
+                } else {
+                    cup.classList.remove('active');
+                }
+            });
+        }
+
+        document.getElementById('caffeineForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            calculateCaffeine();
+        });
+
+        function calculateCaffeine() {
+            const caffeineAmount = parseFloat(document.getElementById('caffeine').value);
+            const consumptionTime = document.getElementById('consumptionTime').value;
+            const bedtime = document.getElementById('bedtime').value;
+
+            if (!caffeineAmount || !consumptionTime || !bedtime) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const consumptionDate = new Date();
+            const [consumptionHours, consumptionMinutes] = consumptionTime.split(':');
+            consumptionDate.setHours(parseInt(consumptionHours), parseInt(consumptionMinutes), 0, 0);
+
+            const bedtimeDate = new Date();
+            const [bedtimeHours, bedtimeMinutes] = bedtime.split(':');
+            bedtimeDate.setHours(parseInt(bedtimeHours), parseInt(bedtimeMinutes), 0, 0);
+
+            if (bedtimeDate < consumptionDate) {
+                bedtimeDate.setDate(bedtimeDate.getDate() + 1);
+            }
+
+            const timeDifference = (bedtimeDate - consumptionDate) / (1000 * 60 * 60); // Time difference in hours
+            const caffeineHalfLife = 5; // Caffeine half-life in hours
+
+            const remainingCaffeine = caffeineAmount * Math.pow(0.5, timeDifference / caffeineHalfLife);
+            const averageCupCaffeine = 100; // Average mg of caffeine in a cup of coffee
+            const cupsEquivalent = remainingCaffeine / averageCupCaffeine;
+
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML = `At your bedtime (${bedtime}), you will have approximately ${remainingCaffeine.toFixed(2)}mg of caffeine in your system. <br><br>This is equivalent to ${cupsEquivalent.toFixed(2)} cups of coffee in your system when you go to sleep.`;
+
+            drawGraph(caffeineAmount, consumptionDate, bedtimeDate);
+            calculateWaterConsumption(caffeineAmount / averageCupCaffeine);
+        }
+
+        function drawGraph(initialCaffeine, startTime, endTime) {
+            const canvas = document.getElementById('caffeineGraph');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = 800;
+            const height = canvas.height = 400;
+            const padding = 50;
+            const graphWidth = width - 2 * padding;
+            const graphHeight = height - 2 * padding;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const caffeineHalfLife = 5;
+            const averageCupCaffeine = 100;
+            const totalHours = Math.ceil((endTime - startTime) / (1000 * 60 * 60));
+            const hoursToZero = Math.ceil(Math.log(0.01) / Math.log(0.5) * caffeineHalfLife);
+            const maxHours = Math.max(totalHours, hoursToZero);
+
+            // Calculate max caffeine for y-axis scale
+            const maxCaffeine = Math.ceil(initialCaffeine / 50) * 50;
+
+            // Draw axes
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding);
+            ctx.lineTo(width - padding, height - padding);
+            ctx.stroke();
+
+            // Draw caffeine level line
+            ctx.beginPath();
+            ctx.moveTo(padding, height - padding);
+
+            for (let hour = 0; hour <= maxHours; hour += 0.5) {
+                const x = padding + (hour / maxHours) * graphWidth;
+                const caffeine = initialCaffeine * Math.pow(0.5, hour / caffeineHalfLife);
+                const y = height - padding - (caffeine / maxCaffeine) * graphHeight;
+                ctx.lineTo(x, y);
+
+                // Add mg labels every 2 hours
+                if (hour % 2 === 0) {
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.fillText(`${caffeine.toFixed(1)}mg`, x + 5, y - 5);
+                }
+            }
+
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw cup equivalent axis
+            ctx.beginPath();
+            ctx.moveTo(width - padding, height - padding);
+            ctx.lineTo(width - padding, padding);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            const maxCups = maxCaffeine / averageCupCaffeine;
+            for (let cup = 0; cup <= maxCups; cup += 0.5) {
+                const y = height - padding - (cup / maxCups) * graphHeight;
+                ctx.fillStyle = '#00F';
+                ctx.fillText(`${cup} cups`, width - padding + 5, y);
+            }
+
+            // Add labels
+            ctx.fillStyle = '#000';
+            ctx.font = '14px Arial';
+            ctx.fillText('Caffeine Level Over Time', width / 2 - 70, 20);
+            ctx.fillText('Time (hours)', width / 2 - 30, height - 10);
+            ctx.save();
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Caffeine (mg)', -height / 2 - 40, 15);
+            ctx.restore();
+
+            // Add time labels
+            for (let hour = 0; hour <= maxHours; hour += 2) {
+                const x = padding + (hour / maxHours) * graphWidth;
+                ctx.fillStyle = '#000';
+                ctx.fillText(`${hour}h`, x - 10, height - padding + 20);
+            }
+
+            // Mark bedtime
+            const bedtimeHour = (endTime - startTime) / (1000 * 60 * 60);
+            const bedtimeX = padding + (bedtimeHour / maxHours) * graphWidth;
+            ctx.beginPath();
+            ctx.moveTo(bedtimeX, padding);
+            ctx.lineTo(bedtimeX, height - padding);
+            ctx.strokeStyle = '#F00';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#F00';
+            ctx.fillText('Bedtime', bedtimeX - 25, padding - 10);
+
+            // Mark when caffeine is effectively out of system (< 1% of initial)
+            const zeroHour = Math.log(0.01) / Math.log(0.5) * caffeineHalfLife;
+            const zeroX = padding + (zeroHour / maxHours) * graphWidth;
+            ctx.beginPath();
+            ctx.moveTo(zeroX, padding);
+            ctx.lineTo(zeroX, height - padding);
+            ctx.strokeStyle = '#00F';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#00F';
+            ctx.fillText('Caffeine < 1%', zeroX - 35, height - padding + 35);
+        }
+
+        function calculateWaterConsumption(cups) {
+            const waterPerCup = 37; // gallons of water per cup of coffee
+            const dailyWaterUsage = cups * waterPerCup;
+            const yearlyWaterUsage = dailyWaterUsage * 365;
+
+            const waterResultElement = document.getElementById('waterResult');
+            waterResultElement.innerHTML = `Your coffee consumption uses approximately ${dailyWaterUsage.toFixed(2)} gallons of water.<br>
+                If you maintain this habit daily, it would use ${yearlyWaterUsage.toFixed(2)} gallons of water per year.`;
+
+            drawWaterVisualization(dailyWaterUsage, yearlyWaterUsage);
+            calculateDeforestation(cups);
+        }
+
+        function drawWaterVisualization(daily, yearly) {
+            const container = document.getElementById('waterVisualization');
+            container.innerHTML = '';
+
+            const maxHeight = 180; // max height of the bar in pixels
+            const maxWater = Math.max(daily, yearly);
+
+            function createBar(amount, label) {
+                const bar = document.createElement('div');
+                bar.className = 'water-bar';
+                const height = (amount / maxWater) * maxHeight;
+                bar.style.height = `${height}px`;
+                bar.innerHTML = `${amount.toFixed(0)}<br>gallons`;
+
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'water-label';
+                labelDiv.textContent = label;
+
+                const wrapper = document.createElement('div');
+                wrapper.appendChild(bar);
+                wrapper.appendChild(labelDiv);
+
+                return wrapper;
+            }
+
+            container.appendChild(createBar(daily, 'Daily'));
+            container.appendChild(createBar(yearly, 'Yearly'));
+        }
+
+        function calculateDeforestation(cups) {
+            const deforestationPerCup = 1; // square inch per cup
+            const yearlyDeforestation = cups * deforestationPerCup * 365;
+            const squareFeet = yearlyDeforestation / 144; // Convert square inches to square feet
+            const squareMeters = squareFeet * 0.092903; // Convert square feet to square meters
+
+            const deforestationResultElement = document.getElementById('deforestationResult');
+            deforestationResultElement.innerHTML = `Your yearly coffee consumption could contribute to the deforestation of approximately ${squareFeet.toFixed(2)} square feet (${squareMeters.toFixed(2)} square meters) of rainforest.`;
+
+            drawDeforestationMap(squareMeters);
+        }
+
+        let map;
+        let deforestationLayer;
+
+        function drawDeforestationMap(squareMeters) {
+            if (!map) {
+                map = L.map('map').setView([-3.4653, -62.2159], 12); // Centered on the Amazon rainforest
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+            }
+
+            if (deforestationLayer) {
+                map.removeLayer(deforestationLayer);
+            }
+
+            const sideLength = Math.sqrt(squareMeters);
+            const bounds = [
+                [-3.4653, -62.2159],
+                [-3.4653 + sideLength / 111000, -62.2159 + sideLength / (111000 * Math.cos(-3.4653 * Math.PI / 180))]
+            ];
+
+            deforestationLayer = L.rectangle(bounds, {color: "#8B4513", weight: 1, fillOpacity: 0.5}).addTo(map);
+            map.fitBounds(bounds);
+
+            deforestationLayer.bindPopup(`Deforested area: ${squareMeters.toFixed(2)} square meters`).openPopup();
+        }
+    </script>
+</body>
+</html>
