@@ -3,27 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spinning 3D Earth</title>
+    <title>Interactive 3D Earth</title>
     <style>
-        body { margin: 0; }
-        canvas { display: block; }
+        body { 
+            margin: 0; 
+            overflow: hidden;
+        }
+        canvas { 
+            display: block; 
+        }
     </style>
 </head>
 <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
     <script>
         // Scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
+        // Add OrbitControls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 2;
+        controls.maxDistance = 10;
+
+        // Space background
+        const spaceGeometry = new THREE.SphereGeometry(50, 32, 32);
+        const spaceTexture = new THREE.TextureLoader().load('/api/placeholder/2048/1024');
+        const spaceMaterial = new THREE.MeshBasicMaterial({
+            map: spaceTexture,
+            side: THREE.BackSide
+        });
+        const space = new THREE.Mesh(spaceGeometry, spaceMaterial);
+        scene.add(space);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+        sunLight.position.set(5, 3, 5);
+        scene.add(sunLight);
+
         // Earth geometry and material
-        const geometry = new THREE.SphereGeometry(1, 32, 32);
+        const geometry = new THREE.SphereGeometry(1, 64, 64);
         const textureLoader = new THREE.TextureLoader();
-        const material = new THREE.MeshBasicMaterial({
-            map: textureLoader.load('/images/earth_texture.png')
+        
+        // Using MeshPhongMaterial for better lighting
+        const material = new THREE.MeshPhongMaterial({
+            map: textureLoader.load('/api/placeholder/2048/1024'),
+            bumpMap: textureLoader.load('/api/placeholder/2048/1024'),
+            bumpScale: 0.05,
+            specularMap: textureLoader.load('/api/placeholder/2048/1024'),
+            specular: new THREE.Color('grey'),
+            shininess: 5
         });
 
         // Earth mesh
@@ -32,10 +70,42 @@
 
         camera.position.z = 3;
 
+        // Add stars
+        function addStars() {
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsMaterial = new THREE.PointsMaterial({
+                color: 0xFFFFFF,
+                size: 0.05
+            });
+
+            const starsVertices = [];
+            for(let i = 0; i < 5000; i++) {
+                const x = (Math.random() - 0.5) * 100;
+                const y = (Math.random() - 0.5) * 100;
+                const z = (Math.random() - 0.5) * 100;
+                starsVertices.push(x, y, z);
+            }
+
+            starsGeometry.setAttribute('position', 
+                new THREE.Float32BufferAttribute(starsVertices, 3)
+            );
+            
+            const stars = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(stars);
+        }
+
+        addStars();
+
         // Animation loop
         const animate = function () {
             requestAnimationFrame(animate);
-            earth.rotation.y += 0.01; // Spin the Earth
+            
+            // Auto-rotation when not interacting
+            if (!controls.enabled) {
+                earth.rotation.y += 0.001;
+            }
+            
+            controls.update();
             renderer.render(scene, camera);
         };
 
@@ -46,6 +116,13 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Add double-click to toggle controls
+        let autoRotate = true;
+        renderer.domElement.addEventListener('dblclick', () => {
+            controls.enabled = !controls.enabled;
+            autoRotate = !autoRotate;
         });
     </script>
 </body>
