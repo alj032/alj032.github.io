@@ -8,6 +8,7 @@
         body { 
             margin: 0; 
             overflow: hidden;
+            background: black;
         }
         canvas { 
             display: block; 
@@ -15,35 +16,38 @@
     </style>
 </head>
 <body>
-    <!-- Load Three.js first -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
-    <!-- Load OrbitControls from a reliable source -->
     <script>
         class OrbitControls extends THREE.EventDispatcher {
-            constructor(object, domElement) {
+            constructor(camera, domElement) {
                 super();
                 
-                this.object = object;
+                this.camera = camera;
                 this.domElement = domElement;
                 
-                // Set to false to disable this control
                 this.enabled = true;
-
-                this.minDistance = 0;
-                this.maxDistance = Infinity;
+                this.target = new THREE.Vector3();
+                
+                this.minDistance = 2;
+                this.maxDistance = 10;
                 this.enableDamping = false;
                 this.dampingFactor = 0.05;
+
+                this.rotateSpeed = 1.0;
+                this.zoomSpeed = 1.0;
 
                 let scope = this;
                 let STATE = { NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2 };
                 let state = STATE.NONE;
                 
-                // Mouse position tracking
                 let mouseX = 0, mouseY = 0;
                 let lastMouseX = 0, lastMouseY = 0;
                 
-                // Add event listeners
+                // Spherical coordinates
+                let spherical = new THREE.Spherical();
+                let sphericalDelta = new THREE.Spherical();
+                
                 this.domElement.addEventListener('mousedown', onMouseDown);
                 this.domElement.addEventListener('mousemove', onMouseMove);
                 this.domElement.addEventListener('mouseup', onMouseUp);
@@ -58,10 +62,10 @@
                     lastMouseY = event.clientY;
                     
                     switch (event.button) {
-                        case 0: // left mouse
+                        case 0:
                             state = STATE.ROTATE;
                             break;
-                        case 2: // right mouse
+                        case 2:
                             state = STATE.PAN;
                             break;
                     }
@@ -76,12 +80,14 @@
                     mouseY = event.clientY - lastMouseY;
                     
                     if (state === STATE.ROTATE) {
-                        scope.object.rotation.y += mouseX * 0.01;
-                        scope.object.rotation.x += mouseY * 0.01;
+                        sphericalDelta.theta -= mouseX * 0.005 * scope.rotateSpeed;
+                        sphericalDelta.phi -= mouseY * 0.005 * scope.rotateSpeed;
                     }
                     
                     lastMouseX = event.clientX;
                     lastMouseY = event.clientY;
+                    
+                    scope.update();
                 }
                 
                 function onMouseUp() {
@@ -93,22 +99,41 @@
                     
                     event.preventDefault();
                     
-                    // Zoom in/out
-                    let delta = event.deltaY;
-                    scope.object.position.z += delta * 0.01;
+                    if (event.deltaY > 0) {
+                        spherical.radius *= 1.1;
+                    } else {
+                        spherical.radius /= 1.1;
+                    }
                     
-                    // Clamp to min/max distance
-                    scope.object.position.z = Math.max(
+                    spherical.radius = Math.max(
                         scope.minDistance,
-                        Math.min(scope.maxDistance, scope.object.position.z)
+                        Math.min(scope.maxDistance, spherical.radius)
                     );
+                    
+                    scope.update();
                 }
-            }
-
-            update() {
-                // Required for damping
-                if (this.enableDamping) {
-                    // Add damping logic here if needed
+                
+                this.update = function() {
+                    let offset = new THREE.Vector3();
+                    
+                    // Get current camera position in spherical coordinates
+                    offset.copy(scope.camera.position).sub(scope.target);
+                    spherical.setFromVector3(offset);
+                    
+                    // Apply rotation changes
+                    spherical.theta += sphericalDelta.theta;
+                    spherical.phi += sphericalDelta.phi;
+                    
+                    // Restrict phi to avoid the camera going upside down
+                    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                    
+                    // Convert back to Cartesian coordinates
+                    offset.setFromSpherical(spherical);
+                    scope.camera.position.copy(scope.target).add(offset);
+                    scope.camera.lookAt(scope.target);
+                    
+                    // Reset deltas
+                    sphericalDelta.set(0, 0, 0);
                 }
             }
         }
@@ -122,18 +147,49 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Earth geometry and material
-        const geometry = new THREE.SphereGeometry(1, 64, 64);
-        const material = new THREE.MeshPhongMaterial({
-            map: new THREE.TextureLoader().load('/images/earth_texture.png')
+        // Stars background
+        const starGeometry = new THREE.SphereGeometry(100, 32, 32);
+        const starMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            side: THREE.BackSide
+        });
+        
+        // Create star points
+        const starCount = 1000;
+        const positions = [];
+        for (let i = 0; i < starCount; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+            const radius = 90 + Math.random() * 10;
+            
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.sin(phi) * Math.sin(theta);
+            const z = radius * Math.cos(phi);
+            
+            positions.push(x, y, z);
+        }
+        
+        const starPoints = new THREE.BufferGeometry();
+        starPoints.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        const starMesh = new THREE.Points(
+            starPoints,
+            new THREE.PointsMaterial({ color: 0xFFFFFF, size: 0.5 })
+        );
+        scene.add(starMesh);
+
+        // Earth setup
+        const earthGeometry = new THREE.SphereGeometry(1, 64, 64);
+        const earthMaterial = new THREE.MeshPhongMaterial({
+            map: new THREE.TextureLoader().load('/images/earth_texture.png'),
+            specular: new THREE.Color(0x333333),
+            shininess: 5
         });
 
-        // Earth mesh
-        const earth = new THREE.Mesh(geometry, material);
+        const earth = new THREE.Mesh(earthGeometry, earthMaterial);
         scene.add(earth);
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040);
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
         scene.add(ambientLight);
 
         const sunLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -142,10 +198,10 @@
 
         camera.position.z = 3;
 
-        // Add our custom OrbitControls
-        const controls = new OrbitControls(earth, renderer.domElement);
+        // Initialize controls with camera instead of earth
+        const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.minDistance = 2;
+        controls.minDistance = 1.5;
         controls.maxDistance = 10;
 
         // Animation loop
