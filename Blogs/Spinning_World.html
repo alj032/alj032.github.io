@@ -15,8 +15,105 @@
     </style>
 </head>
 <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.159.0/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.159.0/controls/OrbitControls.min.js"></script>
+    <!-- Load Three.js first -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Load OrbitControls from a reliable source -->
+    <script>
+        class OrbitControls extends THREE.EventDispatcher {
+            constructor(object, domElement) {
+                super();
+                
+                this.object = object;
+                this.domElement = domElement;
+                
+                // Set to false to disable this control
+                this.enabled = true;
+
+                this.minDistance = 0;
+                this.maxDistance = Infinity;
+                this.enableDamping = false;
+                this.dampingFactor = 0.05;
+
+                let scope = this;
+                let STATE = { NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2 };
+                let state = STATE.NONE;
+                
+                // Mouse position tracking
+                let mouseX = 0, mouseY = 0;
+                let lastMouseX = 0, lastMouseY = 0;
+                
+                // Add event listeners
+                this.domElement.addEventListener('mousedown', onMouseDown);
+                this.domElement.addEventListener('mousemove', onMouseMove);
+                this.domElement.addEventListener('mouseup', onMouseUp);
+                this.domElement.addEventListener('wheel', onMouseWheel);
+                
+                function onMouseDown(event) {
+                    if (!scope.enabled) return;
+                    
+                    event.preventDefault();
+                    
+                    lastMouseX = event.clientX;
+                    lastMouseY = event.clientY;
+                    
+                    switch (event.button) {
+                        case 0: // left mouse
+                            state = STATE.ROTATE;
+                            break;
+                        case 2: // right mouse
+                            state = STATE.PAN;
+                            break;
+                    }
+                }
+                
+                function onMouseMove(event) {
+                    if (!scope.enabled || state === STATE.NONE) return;
+                    
+                    event.preventDefault();
+                    
+                    mouseX = event.clientX - lastMouseX;
+                    mouseY = event.clientY - lastMouseY;
+                    
+                    if (state === STATE.ROTATE) {
+                        scope.object.rotation.y += mouseX * 0.01;
+                        scope.object.rotation.x += mouseY * 0.01;
+                    }
+                    
+                    lastMouseX = event.clientX;
+                    lastMouseY = event.clientY;
+                }
+                
+                function onMouseUp() {
+                    state = STATE.NONE;
+                }
+                
+                function onMouseWheel(event) {
+                    if (!scope.enabled) return;
+                    
+                    event.preventDefault();
+                    
+                    // Zoom in/out
+                    let delta = event.deltaY;
+                    scope.object.position.z += delta * 0.01;
+                    
+                    // Clamp to min/max distance
+                    scope.object.position.z = Math.max(
+                        scope.minDistance,
+                        Math.min(scope.maxDistance, scope.object.position.z)
+                    );
+                }
+            }
+
+            update() {
+                // Required for damping
+                if (this.enableDamping) {
+                    // Add damping logic here if needed
+                }
+            }
+        }
+    </script>
+
     <script>
         // Scene setup
         const scene = new THREE.Scene();
@@ -25,22 +122,15 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Add OrbitControls
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.minDistance = 2;
-        controls.maxDistance = 10;
-
-        // Space background
-        const spaceGeometry = new THREE.SphereGeometry(50, 32, 32);
-        const spaceTexture = new THREE.TextureLoader().load('/api/placeholder/2048/1024');
-        const spaceMaterial = new THREE.MeshBasicMaterial({
-            map: spaceTexture,
-            side: THREE.BackSide
+        // Earth geometry and material
+        const geometry = new THREE.SphereGeometry(1, 64, 64);
+        const material = new THREE.MeshPhongMaterial({
+            map: new THREE.TextureLoader().load('/images/earth_texture.png')
         });
-        const space = new THREE.Mesh(spaceGeometry, spaceMaterial);
-        scene.add(space);
+
+        // Earth mesh
+        const earth = new THREE.Mesh(geometry, material);
+        scene.add(earth);
 
         // Lighting
         const ambientLight = new THREE.AmbientLight(0x404040);
@@ -50,61 +140,17 @@
         sunLight.position.set(5, 3, 5);
         scene.add(sunLight);
 
-        // Earth geometry and material
-        const geometry = new THREE.SphereGeometry(1, 64, 64);
-        const textureLoader = new THREE.TextureLoader();
-        
-        // Using MeshPhongMaterial for better lighting
-        const material = new THREE.MeshPhongMaterial({
-            map: textureLoader.load('/api/placeholder/2048/1024'),
-            bumpMap: textureLoader.load('/api/placeholder/2048/1024'),
-            bumpScale: 0.05,
-            specularMap: textureLoader.load('/api/placeholder/2048/1024'),
-            specular: new THREE.Color('grey'),
-            shininess: 5
-        });
-
-        // Earth mesh
-        const earth = new THREE.Mesh(geometry, material);
-        scene.add(earth);
-
         camera.position.z = 3;
 
-        // Add stars
-        function addStars() {
-            const starsGeometry = new THREE.BufferGeometry();
-            const starsMaterial = new THREE.PointsMaterial({
-                color: 0xFFFFFF,
-                size: 0.05
-            });
-
-            const starsVertices = [];
-            for(let i = 0; i < 5000; i++) {
-                const x = (Math.random() - 0.5) * 100;
-                const y = (Math.random() - 0.5) * 100;
-                const z = (Math.random() - 0.5) * 100;
-                starsVertices.push(x, y, z);
-            }
-
-            starsGeometry.setAttribute('position', 
-                new THREE.Float32BufferAttribute(starsVertices, 3)
-            );
-            
-            const stars = new THREE.Points(starsGeometry, starsMaterial);
-            scene.add(stars);
-        }
-
-        addStars();
+        // Add our custom OrbitControls
+        const controls = new OrbitControls(earth, renderer.domElement);
+        controls.enableDamping = true;
+        controls.minDistance = 2;
+        controls.maxDistance = 10;
 
         // Animation loop
         const animate = function () {
             requestAnimationFrame(animate);
-            
-            // Auto-rotation when not interacting
-            if (!controls.enabled) {
-                earth.rotation.y += 0.001;
-            }
-            
             controls.update();
             renderer.render(scene, camera);
         };
@@ -118,12 +164,8 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Add double-click to toggle controls
-        let autoRotate = true;
-        renderer.domElement.addEventListener('dblclick', () => {
-            controls.enabled = !controls.enabled;
-            autoRotate = !autoRotate;
-        });
+        // Prevent right-click menu
+        renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
     </script>
 </body>
 </html>
