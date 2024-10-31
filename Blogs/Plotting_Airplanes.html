@@ -55,6 +55,7 @@
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
+            max-width: 500px;
         }
 
         .input-group {
@@ -82,6 +83,15 @@
 
         .file-name {
             margin-left: 10px;
+        }
+
+        .remove-button {
+            background: white;
+            padding: 5px 10px;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -114,7 +124,7 @@
             </div>
             <div id="textInputGroup" class="input-group" style="display: none;">
                 <label for="inputData">Input Data:</label>
-                <textarea id="inputData" rows="5"></textarea>
+                <textarea id="inputData" rows="5" style="width: 100%;"></textarea>
             </div>
             <div class="input-group">
                 <button id="addLayerModalButton">Add Layer</button>
@@ -125,9 +135,40 @@
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
-        // [Previous JavaScript code remains the same until the modal event listeners]
+        // Initialize the map
+        var map = L.map('map').setView([51.505, -0.09], 13);
 
-        // Add input type change handler
+        // Add the base tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Get user location
+        getUserLocation();
+
+        var layerCount = 0;
+        var weatherRadarLayer = null;
+        var weatherRadarRemoveButton = null;
+        var radarStationsLayer = null;
+        var radarStationsRemoveButton = null;
+        var airplaneLayer = null;
+        var airplaneRemoveButton = null;
+
+        // Button event listeners
+        document.getElementById('addWeatherRadarButton').addEventListener('click', function () {
+            addWeatherRadarLayer();
+            addRadarStationsLayer();
+        });
+
+        document.getElementById('addAirplaneTrackingButton').addEventListener('click', function () {
+            addAirplaneTrackingLayer();
+        });
+
+        // Modal control
+        document.getElementById('addLayerButton').addEventListener('click', function () {
+            document.getElementById('modal').style.display = 'block';
+        });
+
         document.getElementById('inputType').addEventListener('change', function () {
             var fileInputGroup = document.getElementById('fileInputGroup');
             var textInputGroup = document.getElementById('textInputGroup');
@@ -141,13 +182,11 @@
             }
         });
 
-        // Add file input change handler
         document.getElementById('fileInput').addEventListener('change', function (e) {
             var fileName = e.target.files[0]?.name || 'No file chosen';
             document.getElementById('fileName').textContent = fileName;
         });
 
-        // Modify the add layer button click handler
         document.getElementById('addLayerModalButton').addEventListener('click', function () {
             var inputType = document.getElementById('inputType').value;
 
@@ -194,14 +233,232 @@
                     });
             }
 
-            // Reset the form
+            // Reset and close modal
             document.getElementById('fileInput').value = '';
             document.getElementById('fileName').textContent = '';
             document.getElementById('inputData').value = '';
             document.getElementById('modal').style.display = 'none';
         });
 
-        // [Rest of the JavaScript code remains the same]
+        document.getElementById('cancelModalButton').addEventListener('click', function () {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('inputData').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileName').textContent = '';
+        });
+
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        var latitude = position.coords.latitude;
+                        var longitude = position.coords.longitude;
+                        var userLocation = L.latLng(latitude, longitude);
+                        map.setView(userLocation, 13);
+
+                        var userIcon = L.divIcon({
+                            html: '<i class="fas fa-male fa-2x"></i>',
+                            className: 'user-location-icon',
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 20]
+                        });
+
+                        L.marker(userLocation, { icon: userIcon }).addTo(map)
+                            .bindPopup('Your Location')
+                            .openPopup();
+                    },
+                    function (error) {
+                        console.log('Error getting user location:', error);
+                    }
+                );
+            } else {
+                console.log('Geolocation is not supported by this browser.');
+            }
+        }
+
+        function addGeoJsonLayer(data) {
+            var geoJsonLayer = L.geoJSON(data, {
+                pointToLayer: function (feature, latlng) {
+                    return L.circleMarker(latlng, {
+                        radius: 8,
+                        fillColor: 'blue',
+                        color: 'white',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    });
+                },
+                onEachFeature: function (feature, layer) {
+                    var popupContent = '<div>';
+                    for (var prop in feature.properties) {
+                        popupContent += '<b>' + prop + ':</b> ' + feature.properties[prop] + '<br>';
+                    }
+                    popupContent += '</div>';
+                    layer.bindPopup(popupContent);
+                }
+            }).addTo(map);
+
+            addRemoveButton(geoJsonLayer);
+        }
+
+        function addRemoveButton(layer) {
+            var removeButton = L.control({ position: 'topright' });
+            removeButton.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'remove-button');
+                div.innerHTML = 'Remove Layer ' + layerCount;
+                div.onclick = function () {
+                    map.removeLayer(layer);
+                    map.removeControl(removeButton);
+                };
+                return div;
+            };
+            removeButton.addTo(map);
+            layerCount++;
+        }
+
+        function addWeatherRadarLayer() {
+            if (weatherRadarLayer) {
+                map.removeLayer(weatherRadarLayer);
+                if (weatherRadarRemoveButton) {
+                    map.removeControl(weatherRadarRemoveButton);
+                }
+                weatherRadarLayer = null;
+                weatherRadarRemoveButton = null;
+                return;
+            }
+
+            var bounds = map.getBounds();
+            var bbox = bounds._southWest.lat + "," + bounds._southWest.lng + "," + bounds._northEast.lat + "," + bounds._northEast.lng;
+
+            var radarImageryUrl = "https://idpgis.ncep.noaa.gov/arcgis/services/NWS_Forecasts_Guidance_Warnings/mapserver/WMSServer?request=GetMap&service=WMS&version=1.3.0&layers=1&styles=&format=image/png&transparent=true&crs=EPSG:3857&bbox=" + bbox + "&width=256&height=256";
+
+            weatherRadarLayer = L.tileLayer(radarImageryUrl, {
+                attribution: 'Weather Radar Imagery &copy; National Weather Service',
+                tileSize: 256,
+                opacity: 0.7
+            }).addTo(map);
+
+            weatherRadarRemoveButton = L.control({ position: 'topright' });
+            weatherRadarRemoveButton.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'remove-button');
+                div.innerHTML = 'Remove Weather Radar';
+                L.DomEvent.on(div, 'click', function () {
+                    addWeatherRadarLayer();
+                });
+                return div;
+            };
+            weatherRadarRemoveButton.addTo(map);
+        }
+
+        function addRadarStationsLayer() {
+            if (radarStationsLayer) {
+                map.removeLayer(radarStationsLayer);
+                map.removeControl(radarStationsRemoveButton);
+                radarStationsLayer = null;
+                radarStationsRemoveButton = null;
+                return;
+            }
+
+            var weatherRadarUrl = 'https://api.weather.gov/radar/stations';
+
+            fetch(weatherRadarUrl)
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    var radarStations = data.features;
+                    var radarMarkers = [];
+
+                    radarStations.forEach(function (station) {
+                        var latitude = station.geometry.coordinates[1];
+                        var longitude = station.geometry.coordinates[0];
+                        var stationId = station.properties.id;
+                        var stationName = station.properties.name;
+
+                        var marker = L.marker([latitude, longitude]);
+                        marker.bindPopup('<b>Station ID:</b> ' + stationId + '<br><b>Station Name:</b> ' + stationName);
+                        radarMarkers.push(marker);
+                    });
+
+                    radarStationsLayer = L.layerGroup(radarMarkers).addTo(map);
+
+                    radarStationsRemoveButton = L.control({ position: 'topright' });
+                    radarStationsRemoveButton.onAdd = function (map) {
+                        var div = L.DomUtil.create('div', 'remove-button');
+                        div.innerHTML = 'Remove Radar Stations';
+                        div.onclick = function () {
+                            addRadarStationsLayer();
+                        };
+                        return div;
+                    };
+                    radarStationsRemoveButton.addTo(map);
+                })
+                .catch(function (error) {
+                    console.log('Error loading weather radar data:', error);
+                });
+        }
+
+        function addAirplaneTrackingLayer() {
+            if (airplaneLayer) {
+                map.removeLayer(airplaneLayer);
+                map.removeControl(airplaneRemoveButton);
+                airplaneLayer = null;
+                airplaneRemoveButton = null;
+                return;
+            }
+
+            var airplaneTrackingUrl = 'https://opensky-network.org/api/states/all';
+
+            fetch(airplaneTrackingUrl)
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    var airplaneIcon = L.divIcon({
+                        html: '<i class="fas fa-plane"></i>',
+                        className: 'airplane-icon',
+                        iconSize: [25, 25],
+                        iconAnchor: [12, 12],
+                        popupAnchor: [0, -10]
+                    });
+
+                    var airplaneMarkers = [];
+
+                    data.states.forEach(function (state) {
+                        var latitude = state[6];
+                        var longitude = state[5];
+                        var callsign = state[1] || 'N/A';
+                        var velocity = state[9] !== null ? state[9] + ' m/s' : 'N/A';
+                        var altitude = state[7] !== null ? state[7] + ' m' : 'N/A';
+
+                        if (latitude !== null && longitude !== null) {
+                            var marker = L.marker([latitude, longitude], { icon: airplaneIcon });
+                            marker.bindPopup(
+                                '<b>Callsign:</b> ' + callsign +
+                                '<br><b>Velocity:</b> ' + velocity +
+                                '<br><b>Altitude:</b> ' + altitude
+                            );
+                            airplaneMarkers.push(marker);
+                        }
+                    });
+
+                    airplaneLayer = L.layerGroup(airplaneMarkers).addTo(map);
+
+                    airplaneRemoveButton = L.control({ position: 'topright' });
+                    airplaneRemoveButton.onAdd = function (map) {
+                        var div = L.DomUtil.create('div', 'remove-button');
+                        div.innerHTML = 'Remove Airplane Layer';
+                        div.onclick = function () {
+                            addAirplaneTrackingLayer();
+                        };
+                        return div;
+                    };
+                    airplaneRemoveButton.addTo(map);
+                })
+                .catch(function (error) {
+                    console.log('Error loading airplane tracking data:', error);
+                });
+        }
     </script>
 </body>
 </html>
