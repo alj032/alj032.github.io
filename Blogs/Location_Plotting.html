@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="getLocation">Get Current Location</button>
+        <button id="followMe">Follow Me</button>
+        <button id="stopTracking" disabled>Stop Tracking</button>
+    </div>
+    <div id="status"></div>
+    <div id="map"></div>
+
+    <script>
+        let map, marker, watchId, polyline;
+        let locations = [];
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([0, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Initialize polyline for tracking
+            polyline = L.polyline([], {color: 'red'}).addTo(map);
+        }
+
+        function updateStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = isError ? 'error' : 'success';
+        }
+
+        function handleLocation(position) {
+            const { latitude, longitude } = position.coords;
+            const latlng = [latitude, longitude];
+            
+            // Add location to array
+            locations.push(latlng);
+            
+            // Update polyline
+            polyline.setLatLngs(locations);
+
+            // Create or update marker
+            if (!marker) {
+                marker = L.marker(latlng).addTo(map);
+            } else {
+                marker.setLatLng(latlng);
+            }
+
+            // Center map on new location
+            map.setView(latlng, 15);
+            
+            updateStatus(`Location updated: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+        }
+
+        function handleError(error) {
+            const errors = {
+                1: 'Permission denied',
+                2: 'Position unavailable',
+                3: 'Timeout'
+            };
+            updateStatus(`Error: ${errors[error.code] || error.message}`, true);
+        }
+
+        // Initialize map on load
+        initMap();
+
+        // Event Listeners
+        document.getElementById('getLocation').addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                updateStatus('Geolocation is not supported by your browser', true);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(handleLocation, handleError);
+        });
+
+        document.getElementById('followMe').addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                updateStatus('Geolocation is not supported by your browser', true);
+                return;
+            }
+
+            // Clear previous tracking
+            locations = [];
+            if (polyline) {
+                polyline.setLatLngs([]);
+            }
+
+            // Start tracking
+            watchId = navigator.geolocation.watchPosition(handleLocation, handleError);
+            document.getElementById('followMe').disabled = true;
+            document.getElementById('stopTracking').disabled = false;
+            updateStatus('Tracking started');
+        });
+
+        document.getElementById('stopTracking').addEventListener('click', () => {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                document.getElementById('followMe').disabled = false;
+                document.getElementById('stopTracking').disabled = true;
+                updateStatus('Tracking stopped');
+            }
+        });
+    </script>
+</body>
+</html>
