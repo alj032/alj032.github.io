@@ -46,6 +46,13 @@
             background-color: #e8f5e9;
             color: #2e7d32;
         }
+        #downloadSection {
+            margin-top: 20px;
+            display: none;
+        }
+        .download-btn {
+            background-color: #2196F3;
+        }
     </style>
 </head>
 <body>
@@ -54,12 +61,17 @@
         <button id="followMe">Follow Me</button>
         <button id="stopTracking" disabled>Stop Tracking</button>
     </div>
+    <div id="downloadSection">
+        <button id="downloadGeoJSON" class="download-btn">Download Route (GeoJSON)</button>
+        <button id="downloadGPX" class="download-btn">Download Route (GPX)</button>
+    </div>
     <div id="status"></div>
     <div id="map"></div>
 
     <script>
         let map, marker, watchId, polyline;
         let locations = [];
+        let timestamps = [];
 
         // Initialize map
         function initMap() {
@@ -82,8 +94,9 @@
             const { latitude, longitude } = position.coords;
             const latlng = [latitude, longitude];
             
-            // Add location to array
+            // Add location and timestamp to arrays
             locations.push(latlng);
+            timestamps.push(position.timestamp);
             
             // Update polyline
             polyline.setLatLngs(locations);
@@ -110,6 +123,58 @@
             updateStatus(`Error: ${errors[error.code] || error.message}`, true);
         }
 
+        function createGeoJSON() {
+            return {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: {
+                            name: "Tracked Route",
+                            timestamps: timestamps
+                        },
+                        geometry: {
+                            type: "LineString",
+                            coordinates: locations.map(latlng => [latlng[1], latlng[0]]) // Convert to [lon, lat] for GeoJSON
+                        }
+                    }
+                ]
+            };
+        }
+
+        function createGPX() {
+            const points = locations.map((latlng, i) => 
+                `    <trkpt lat="${latlng[0]}" lon="${latlng[1]}">
+      <time>${new Date(timestamps[i]).toISOString()}</time>
+    </trkpt>`
+            ).join('\n');
+
+            return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Location Tracker Web App"
+  xmlns="http://www.topografix.com/GPX/1/1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <trk>
+    <name>Tracked Route</name>
+    <trkseg>
+${points}
+    </trkseg>
+  </trk>
+</gpx>`;
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
         // Initialize map on load
         initMap();
 
@@ -131,9 +196,11 @@
 
             // Clear previous tracking
             locations = [];
+            timestamps = [];
             if (polyline) {
                 polyline.setLatLngs([]);
             }
+            document.getElementById('downloadSection').style.display = 'none';
 
             // Start tracking
             watchId = navigator.geolocation.watchPosition(handleLocation, handleError);
@@ -148,7 +215,30 @@
                 watchId = null;
                 document.getElementById('followMe').disabled = false;
                 document.getElementById('stopTracking').disabled = true;
-                updateStatus('Tracking stopped');
+                document.getElementById('downloadSection').style.display = 'block';
+                updateStatus('Tracking stopped - Ready to download');
+            }
+        });
+
+        document.getElementById('downloadGeoJSON').addEventListener('click', () => {
+            if (locations.length > 0) {
+                const geoJSON = createGeoJSON();
+                downloadFile(
+                    JSON.stringify(geoJSON, null, 2),
+                    'tracked-route.geojson',
+                    'application/geo+json'
+                );
+            }
+        });
+
+        document.getElementById('downloadGPX').addEventListener('click', () => {
+            if (locations.length > 0) {
+                const gpx = createGPX();
+                downloadFile(
+                    gpx,
+                    'tracked-route.gpx',
+                    'application/gpx+xml'
+                );
             }
         });
     </script>
