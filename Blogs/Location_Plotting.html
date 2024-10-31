@@ -63,7 +63,6 @@
     </div>
     <div id="downloadSection">
         <button id="downloadGeoJSON" class="download-btn">Download Route (GeoJSON)</button>
-        <button id="downloadGPX" class="download-btn">Download Route (GPX)</button>
     </div>
     <div id="status"></div>
     <div id="map"></div>
@@ -142,27 +141,6 @@
             };
         }
 
-        function createGPX() {
-            const points = locations.map((latlng, i) => 
-                `    <trkpt lat="${latlng[0]}" lon="${latlng[1]}">
-      <time>${new Date(timestamps[i]).toISOString()}</time>
-    </trkpt>`
-            ).join('\n');
-
-            return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Location Tracker Web App"
-  xmlns="http://www.topografix.com/GPX/1/1"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
-  <trk>
-    <name>Tracked Route</name>
-    <trkseg>
-${points}
-    </trkseg>
-  </trk>
-</gpx>`;
-        }
-
         function downloadFile(content, filename, type) {
             const blob = new Blob([content], { type });
             const url = URL.createObjectURL(blob);
@@ -227,17 +205,6 @@ ${points}
                     JSON.stringify(geoJSON, null, 2),
                     'tracked-route.geojson',
                     'application/geo+json'
-                );
-            }
-        });
-
-        document.getElementById('downloadGPX').addEventListener('click', () => {
-            if (locations.length > 0) {
-                const gpx = createGPX();
-                downloadFile(
-                    gpx,
-                    'tracked-route.gpx',
-                    'application/gpx+xml'
                 );
             }
         });
