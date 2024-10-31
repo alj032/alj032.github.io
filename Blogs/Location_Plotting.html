@@ -68,7 +68,7 @@
     <div id="map"></div>
 
     <script>
-        let map, marker, watchId, polyline;
+        let map, marker, accuracyCircle, watchId, polyline;
         let locations = [];
         let timestamps = [];
 
@@ -126,11 +126,29 @@
                 marker.setLatLng(latLng);
             }
 
-            // Fit map to show all points
-            if (locations.length === 1) {
-                map.setView(latLng, 15);
+            // Create or update accuracy circle
+            if (!accuracyCircle) {
+                accuracyCircle = L.circle(latLng, {
+                    radius: accuracy,
+                    color: '#4A90E2',
+                    fillColor: '#4A90E2',
+                    fillOpacity: 0.15,
+                    weight: 2,
+                    opacity: 0.5
+                }).addTo(map);
             } else {
-                map.fitBounds(polyline.getBounds());
+                accuracyCircle.setLatLng(latLng);
+                accuracyCircle.setRadius(accuracy);
+            }
+
+            // Fit map to show both location and accuracy circle
+            if (locations.length === 1) {
+                map.fitBounds(accuracyCircle.getBounds());
+            } else {
+                const bounds = polyline.getBounds();
+                // Extend bounds to include accuracy circle
+                bounds.extend(accuracyCircle.getBounds());
+                map.fitBounds(bounds);
             }
             
             updateStatus(`Location updated: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (accuracy: ${accuracy.toFixed(1)}m)`);
@@ -206,6 +224,10 @@
             if (marker) {
                 map.removeLayer(marker);
                 marker = null;
+            }
+            if (accuracyCircle) {
+                map.removeLayer(accuracyCircle);
+                accuracyCircle = null;
             }
             polyline.setLatLngs([]);
             document.getElementById('downloadSection').style.display = 'none';
