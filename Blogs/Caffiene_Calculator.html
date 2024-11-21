@@ -309,13 +309,13 @@
         <h1 class="page-title">Coffee Impact Calculator</h1>
         <div class="grid-container">
             <div class="left-column">
-                <div class="card">
+                <div class="card" id="caffeine">
                     <h2>Caffeine Levels</h2>
                     <div id="result"></div>
                     <canvas id="caffeineGraph"></canvas>
                 </div>
                 
-                <div class="card">
+                <div class="card" id="water">
                     <h2>Water Consumption Impact</h2>
                     <div class="toggle-container">
                         <button class="toggle-btn active" id="annualWaterBtn">Annual Impact</button>
@@ -325,7 +325,7 @@
                     <div id="waterVisualization"></div>
                 </div>
                 
-                <div class="card">
+                <div class="card" id="deforestation">
                     <h2>Deforestation Impact</h2>
                     <div class="toggle-container">
                         <button class="toggle-btn active" id="annualDeforestationBtn">Annual Impact</button>
@@ -336,7 +336,7 @@
                 </div>
             </div>
             
-            <div class="card input-section">
+            <div class="card input-section" id="calc">
                 <h2>Calculate Your Impact</h2>
                 <div id="coffeeCups" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
                     <img src="/images/coffee-mug-vector-icon.jpg" alt="1 cup" class="coffee-cup" data-cups="1">
@@ -371,10 +371,10 @@
             profileImage: '/images/init.jpg',
             homeUrl: 'https://alj032.github.io/#',
             menuItems: [
-                { id: 'caffeine', icon: 'fa-mug-hot', text: 'CAFFEINE', link: '#caffeineGraph' },
-                { id: 'calculator', icon: 'fa-calculator', text: 'CALCULATOR', link: '#caffeineForm' },
-                { id: 'water', icon: 'fa-droplet', text: 'WATER', link: '#waterVisualization' },
-                { id: 'deforestation', icon: 'fa-tree', text: 'DEFORESTATION', link: '#deforestationResult' }
+                { id: 'caffeine', icon: 'fa-mug-hot', text: 'CAFFEINE', link: '#caffeine' },
+                { id: 'calculator', icon: 'fa-calculator', text: 'CALCULATOR', link: '#calc' },
+                { id: 'water', icon: 'fa-droplet', text: 'WATER', link: '#water' },
+                { id: 'deforestation', icon: 'fa-tree', text: 'DEFORESTATION', link: '#deforestation' }
             ]
         });
 
