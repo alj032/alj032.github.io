@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Sounds</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a1a">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .sound-card {
+            background: #2d2d2d;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            position: relative;
+        }
+
+        .sound-card:hover {
+            transform: translateY(-5px);
+            background: #3d3d3d;
+        }
+
+        .sound-card.playing {
+            background: #4a4a4a;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .sound-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .volume-slider {
+            width: 80%;
+            margin: 10px auto;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: #666;
+            border-radius: 2px;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .timer-container {
+            text-align: center;
+            margin: 20px auto;
+            max-width: 300px;
+        }
+
+        .timer-select {
+            background: #2d2d2d;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sleep Sounds</h1>
+    </div>
+
+    <div class="timer-container">
+        <label for="timer">Sleep Timer:</label>
+        <select id="timer" class="timer-select">
+            <option value="0">Continuous</option>
+            <option value="900">15 Minutes</option>
+            <option value="1800">30 Minutes</option>
+            <option value="3600">1 Hour</option>
+            <option value="7200">2 Hours</option>
+        </select>
+    </div>
+
+    <div class="sound-grid" id="soundGrid"></div>
+
+    <script>
+        const sounds = [
+            { name: 'White Noise', icon: '🌊', file: 'white-noise.mp3' },
+            { name: 'Rain', icon: '🌧', file: 'rain.mp3' },
+            { name: 'Ocean', icon: '🌊', file: 'ocean.mp3' },
+            { name: 'Fan', icon: '💨', file: 'fan.mp3' },
+            { name: 'Forest', icon: '🌳', file: 'forest.mp3' },
+            { name: 'Stream', icon: '💧', file: 'stream.mp3' }
+        ];
+
+        let activeAudio = null;
+        let timerTimeout = null;
+
+        function createSoundCard(sound) {
+            const card = document.createElement('div');
+            card.className = 'sound-card';
+            card.innerHTML = `
+                <div class="sound-icon">${sound.icon}</div>
+                <div>${sound.name}</div>
+                <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="0.5">
+            `;
+
+            const audio = new Audio(`sounds/${sound.file}`);
+            audio.loop = true;
+
+            const volumeSlider = card.querySelector('.volume-slider');
+            volumeSlider.addEventListener('input', (e) => {
+                audio.volume = e.target.value;
+                e.stopPropagation();
+            });
+
+            card.addEventListener('click', () => {
+                if (activeAudio === audio && !audio.paused) {
+                    audio.pause();
+                    card.classList.remove('playing');
+                    activeAudio = null;
+                    clearTimeout(timerTimeout);
+                } else {
+                    if (activeAudio) {
+                        activeAudio.pause();
+                        document.querySelector('.playing')?.classList.remove('playing');
+                    }
+                    audio.play();
+                    card.classList.add('playing');
+                    activeAudio = audio;
+                    startTimer();
+                }
+            });
+
+            return card;
+        }
+
+        function startTimer() {
+            clearTimeout(timerTimeout);
+            const duration = parseInt(document.getElementById('timer').value);
+            if (duration > 0) {
+                timerTimeout = setTimeout(() => {
+                    if (activeAudio) {
+                        activeAudio.pause();
+                        document.querySelector('.playing')?.classList.remove('playing');
+                        activeAudio = null;
+                    }
+                }, duration * 1000);
+            }
+        }
+
+        // Initialize the app
+        const soundGrid = document.getElementById('soundGrid');
+        sounds.forEach(sound => {
+            soundGrid.appendChild(createSoundCard(sound));
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
