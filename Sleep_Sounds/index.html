@@ -19,51 +19,37 @@
             background: #1a1a1a;
             color: #ffffff;
             min-height: 100vh;
-            padding: 20px;
+            overflow: hidden;
         }
 
         .header {
             text-align: center;
             padding: 20px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 10;
+            background: rgba(26, 26, 26, 0.9);
+            backdrop-filter: blur(10px);
         }
 
-        .sound-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .sound-card {
-            background: #2d2d2d;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            position: relative;
-        }
-
-        .sound-card:hover {
-            transform: translateY(-5px);
-            background: #3d3d3d;
-        }
-
-        .sound-card.playing {
-            background: #4a4a4a;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-        }
-
-        .sound-icon {
-            font-size: 2em;
-            margin-bottom: 10px;
+        .volume-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(45, 45, 45, 0.9);
+            padding: 15px 25px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .volume-slider {
-            width: 80%;
-            margin: 10px auto;
+            width: 200px;
             -webkit-appearance: none;
             appearance: none;
             height: 4px;
@@ -81,10 +67,56 @@
             cursor: pointer;
         }
 
+        .wheel-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            margin-top: 30px;
+        }
+
+        .sound-wheel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .sound-card {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: #2d2d2d;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s, background 0.3s;
+            backface-visibility: hidden;
+            transform-origin: center;
+        }
+
+        .sound-card.playing {
+            background: #4a4a4a;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .sound-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
         .timer-container {
-            text-align: center;
-            margin: 20px auto;
-            max-width: 300px;
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
         }
 
         .timer-select {
@@ -93,8 +125,7 @@
             padding: 10px;
             border: none;
             border-radius: 5px;
-            width: 100%;
-            margin-top: 10px;
+            width: 200px;
         }
     </style>
 </head>
@@ -103,8 +134,11 @@
         <h1>Sleep Sounds</h1>
     </div>
 
+    <div class="wheel-container">
+        <div class="sound-wheel" id="soundWheel"></div>
+    </div>
+
     <div class="timer-container">
-        <label for="timer">Sleep Timer:</label>
         <select id="timer" class="timer-select">
             <option value="0">Continuous</option>
             <option value="900">15 Minutes</option>
@@ -114,7 +148,10 @@
         </select>
     </div>
 
-    <div class="sound-grid" id="soundGrid"></div>
+    <div class="volume-container">
+        <span>🔊</span>
+        <input type="range" class="volume-slider" id="masterVolume" min="0" max="1" step="0.01" value="0.5">
+    </div>
 
     <script>
         const sounds = [
@@ -128,24 +165,27 @@
 
         let activeAudio = null;
         let timerTimeout = null;
+        let wheelRotation = 0;
+        let lastScrollPosition = 0;
 
-        function createSoundCard(sound) {
+        function createSoundCard(sound, index) {
             const card = document.createElement('div');
             card.className = 'sound-card';
             card.innerHTML = `
                 <div class="sound-icon">${sound.icon}</div>
                 <div>${sound.name}</div>
-                <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="0.5">
             `;
+
+            const angle = (360 / sounds.length) * index;
+            const radius = 130; // Distance from center
+            const radian = (angle * Math.PI) / 180;
+            const x = Math.sin(radian) * radius;
+            const y = Math.cos(radian) * radius;
+
+            card.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
 
             const audio = new Audio(`sounds/${sound.file}`);
             audio.loop = true;
-
-            const volumeSlider = card.querySelector('.volume-slider');
-            volumeSlider.addEventListener('input', (e) => {
-                audio.volume = e.target.value;
-                e.stopPropagation();
-            });
 
             card.addEventListener('click', () => {
                 if (activeAudio === audio && !audio.paused) {
@@ -158,6 +198,7 @@
                         activeAudio.pause();
                         document.querySelector('.playing')?.classList.remove('playing');
                     }
+                    audio.volume = masterVolume.value;
                     audio.play();
                     card.classList.add('playing');
                     activeAudio = audio;
@@ -167,6 +208,29 @@
 
             return card;
         }
+
+        function rotateWheel(delta) {
+            wheelRotation += delta * 0.5;
+            document.getElementById('soundWheel').style.transform = `rotate(${wheelRotation}deg)`;
+        }
+
+        // Handle volume changes
+        const masterVolume = document.getElementById('masterVolume');
+        masterVolume.addEventListener('input', (e) => {
+            const volume = e.target.value;
+            if (activeAudio) {
+                activeAudio.volume = volume;
+            }
+            
+            // Try to update system volume if supported
+            if ('mediaSession' in navigator) {
+                try {
+                    navigator.mediaSession.setVolume(volume);
+                } catch (error) {
+                    console.log('System volume control not supported');
+                }
+            }
+        });
 
         function startTimer() {
             clearTimeout(timerTimeout);
@@ -182,10 +246,28 @@
             }
         }
 
-        // Initialize the app
-        const soundGrid = document.getElementById('soundGrid');
-        sounds.forEach(sound => {
-            soundGrid.appendChild(createSoundCard(sound));
+        // Initialize the wheel
+        const soundWheel = document.getElementById('soundWheel');
+        sounds.forEach((sound, index) => {
+            soundWheel.appendChild(createSoundCard(sound, index));
+        });
+
+        // Handle scroll for wheel rotation
+        window.addEventListener('wheel', (e) => {
+            rotateWheel(e.deltaY);
+        });
+
+        // Handle touch events for mobile
+        let touchStartY = 0;
+        window.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            const touchY = e.touches[0].clientY;
+            const delta = touchStartY - touchY;
+            rotateWheel(delta);
+            touchStartY = touchY;
         });
 
         // Service Worker Registration
