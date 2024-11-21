@@ -4,9 +4,9 @@ class Sidebar {
         this.options = {
             containerId: 'sidebarContainer',
             profileImage: '/images/init.jpg',
+            homeUrl: 'https://alj032.github.io/#',
             menuItems: [
                 { id: 'home', icon: 'fa-home', text: 'HOME', link: '#' },
-                { id: 'about', icon: 'fa-user', text: 'ABOUT', link: '#about' },
                 { id: 'blog', icon: 'fa-blog', text: 'BLOG', link: '#blog' },
                 { id: 'contact', icon: 'fa-envelope', text: 'CONTACT', link: '#contact' }
             ],
@@ -28,11 +28,20 @@ class Sidebar {
                 z-index: 1000;
             }
 
-            .sidebar img {
+            .sidebar-profile {
+                display: block;
+                padding: 8px;
+                cursor: pointer;
+                transition: opacity 0.3s;
+            }
+
+            .sidebar-profile:hover {
+                opacity: 0.8;
+            }
+
+            .sidebar-profile img {
                 width: 100%;
                 border-radius: 8px;
-                margin-top: 16px;
-                padding: 8px;
             }
 
             .sidebar-item {
@@ -122,12 +131,18 @@ class Sidebar {
         const sidebar = document.createElement('nav');
         sidebar.className = 'sidebar';
 
-        // Add profile image
+        // Add clickable profile image
         if (this.options.profileImage) {
+            const profileLink = document.createElement('a');
+            profileLink.href = this.options.homeUrl;
+            profileLink.className = 'sidebar-profile';
+            
             const img = document.createElement('img');
             img.src = this.options.profileImage;
             img.alt = 'Profile';
-            sidebar.appendChild(img);
+            
+            profileLink.appendChild(img);
+            sidebar.appendChild(profileLink);
         }
 
         // Add menu items
