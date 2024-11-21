@@ -3,48 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced JSON Analyzer and Plotter</title>
-    <!-- Add Chart.js with a specific version -->
+    <title>JSON Analyzer and Plotter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: system-ui, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
         }
-
         .container {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
-        .input-section {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
         textarea {
             width: 100%;
-            min-height: 300px;
+            height: 200px;
+            margin: 10px 0;
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
             font-family: monospace;
-            resize: vertical;
         }
-
         button {
             background-color: #4CAF50;
             color: white;
@@ -52,65 +33,30 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            margin: 5px;
         }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
         .error {
-            color: #ff4444;
-            padding: 10px;
+            color: red;
             margin: 10px 0;
+            padding: 10px;
+            background-color: #ffebee;
             border-radius: 4px;
-            background-color: #ffe5e5;
             display: none;
         }
-
-        .success {
-            color: #4CAF50;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            background-color: #e5ffe5;
-            display: none;
+        .chart-container {
+            height: 400px;
+            margin: 20px 0;
         }
-
-        .visualization-controls {
+        .controls {
+            margin: 20px 0;
             display: flex;
             gap: 10px;
-            margin: 20px 0;
             align-items: center;
             flex-wrap: wrap;
         }
-
-        select, input {
+        select {
             padding: 8px;
-            border: 1px solid #ddd;
             border-radius: 4px;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 400px;
-            margin-top: 20px;
-        }
-
-        .json-preview {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 10px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        #chartCanvas {
-            width: 100%;
-            height: 100%;
         }
     </style>
 </head>
@@ -118,43 +64,29 @@
     <div class="container">
         <h1>JSON Analyzer and Plotter</h1>
         
-        <div class="input-section">
-            <div>
-                <textarea id="jsonInput" placeholder="Paste your JSON here or click 'Load Sample Data'"></textarea>
-                <div id="error" class="error"></div>
-                <div id="success" class="success"></div>
-            </div>
-            <div class="controls">
-                <button onclick="loadSampleData()">Load Sample Data</button>
-                <button onclick="formatJSON()">Format JSON</button>
-                <button onclick="analyzeJSON()">Analyze JSON</button>
-                <button onclick="clearAll()">Clear All</button>
-            </div>
+        <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+        <div>
+            <button onclick="loadSampleData()">Load Sample Data</button>
+            <button onclick="analyzeJSON()">Analyze JSON</button>
+            <button onclick="clearData()">Clear</button>
         </div>
+        
+        <div id="error" class="error"></div>
 
-        <div id="analysisSection" style="display: none;">
-            <div class="visualization-controls">
+        <div id="visSection" style="display: none;">
+            <div class="controls">
                 <select id="chartType">
                     <option value="bar">Bar Chart</option>
                     <option value="line">Line Chart</option>
                     <option value="pie">Pie Chart</option>
                 </select>
-                
-                <select id="propertySelect">
-                    <option value="">Select a property to visualize</option>
-                </select>
-                
-                <input type="color" id="colorPicker" value="#4CAF50">
-                
-                <button onclick="visualizeData()">Update Visualization</button>
+                <select id="dataKey"></select>
+                <button onclick="updateChart()">Update Chart</button>
             </div>
-
+            
             <div class="chart-container">
-                <canvas id="chartCanvas"></canvas>
+                <canvas id="myChart"></canvas>
             </div>
-
-            <h3>JSON Preview</h3>
-            <div id="jsonPreview" class="json-preview"></div>
         </div>
     </div>
 
@@ -162,7 +94,31 @@
         let currentChart = null;
         let jsonData = null;
 
-        // Sample data function
+        // Generate vibrant colors for pie chart
+        function generateColors(count) {
+            const colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF9F40',
+                '#36A2EB', '#FF6384', '#FFCE56', '#9966FF', '#4BC0C0'
+            ];
+            
+            // If we need more colors than in our predefined array, generate them
+            while (colors.length < count) {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                colors.push(color);
+            }
+            
+            return {
+                backgroundColor: colors.map(color => color + 'CC'),  // Add transparency
+                borderColor: colors
+            };
+        }
+
+        // Load sample data
         function loadSampleData() {
             const sampleData = {
                 "monthly_sales": {
@@ -183,107 +139,78 @@
             analyzeJSON();
         }
 
-        // Format JSON with proper indentation
-        function formatJSON() {
-            const input = document.getElementById('jsonInput').value.trim();
-            if (!input) {
-                showError('Please enter JSON data first');
-                return;
-            }
-            
-            try {
-                const parsed = JSON.parse(input);
-                document.getElementById('jsonInput').value = JSON.stringify(parsed, null, 2);
-                showSuccess('JSON formatted successfully');
-            } catch (error) {
-                showError('Invalid JSON format: ' + error.message);
-            }
-        }
-
         // Main analysis function
         function analyzeJSON() {
             const input = document.getElementById('jsonInput').value.trim();
-            if (!input) {
-                showError('Please enter JSON data first');
-                return;
-            }
-
+            const errorElement = document.getElementById('error');
+            
             try {
+                if (!input) throw new Error('Please enter some JSON data');
+                
                 jsonData = JSON.parse(input);
-                document.getElementById('analysisSection').style.display = 'block';
-                document.getElementById('jsonPreview').textContent = JSON.stringify(jsonData, null, 2);
-                updatePropertySelect(jsonData);
-                showSuccess('JSON parsed successfully');
-                visualizeData(); // Initial visualization
-            } catch (error) {
-                showError('Invalid JSON format: ' + error.message);
-                document.getElementById('analysisSection').style.display = 'none';
-            }
-        }
-
-        // Update property select dropdown
-        function updatePropertySelect(data, prefix = '') {
-            const select = document.getElementById('propertySelect');
-            select.innerHTML = '<option value="">Select a property to visualize</option>';
-
-            function addOptions(obj, currentPrefix) {
-                for (const key in obj) {
-                    const newPrefix = currentPrefix ? `${currentPrefix}.${key}` : key;
-                    const value = obj[key];
-
-                    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                        addOptions(value, newPrefix);
-                    } else if (typeof value === 'number' || Array.isArray(value)) {
+                errorElement.style.display = 'none';
+                
+                // Populate data key select
+                const keySelect = document.getElementById('dataKey');
+                keySelect.innerHTML = '';
+                
+                Object.keys(jsonData).forEach(key => {
+                    if (typeof jsonData[key] === 'object') {
                         const option = document.createElement('option');
-                        option.value = newPrefix;
-                        option.textContent = newPrefix;
-                        select.appendChild(option);
+                        option.value = key;
+                        option.textContent = key;
+                        keySelect.appendChild(option);
                     }
-                }
-            }
+                });
 
-            addOptions(data, '');
+                // Show visualization section
+                document.getElementById('visSection').style.display = 'block';
+                
+                // Create initial chart
+                updateChart();
+                
+            } catch (error) {
+                errorElement.textContent = 'Error: ' + error.message;
+                errorElement.style.display = 'block';
+                document.getElementById('visSection').style.display = 'none';
+            }
         }
 
-        // Visualize the selected data
-        function visualizeData() {
-            const propertySelect = document.getElementById('propertySelect');
-            if (!propertySelect.value) {
-                showError('Please select a property to visualize');
-                return;
-            }
-
-            // Get selected property path and data
-            const propertyPath = propertySelect.value.split('.');
-            let selectedData = jsonData;
-            for (const prop of propertyPath) {
-                selectedData = selectedData[prop];
-            }
-
-            // Prepare chart data
+        // Update or create new chart
+        function updateChart() {
+            const selectedKey = document.getElementById('dataKey').value;
             const chartType = document.getElementById('chartType').value;
-            const color = document.getElementById('colorPicker').value;
-            const labels = Array.isArray(selectedData) ? 
-                Array.from({length: selectedData.length}, (_, i) => `Item ${i + 1}`) :
-                Object.keys(selectedData);
-            const values = Array.isArray(selectedData) ? selectedData : Object.values(selectedData);
+            
+            if (!selectedKey || !jsonData[selectedKey]) return;
 
-            // Destroy previous chart if exists
+            const data = jsonData[selectedKey];
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+            // Destroy existing chart if it exists
             if (currentChart) {
                 currentChart.destroy();
             }
 
+            // Get colors based on chart type
+            const colors = chartType === 'pie' ? 
+                generateColors(values.length) : 
+                {
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)'
+                };
+
             // Create new chart
-            const ctx = document.getElementById('chartCanvas').getContext('2d');
+            const ctx = document.getElementById('myChart').getContext('2d');
             currentChart = new Chart(ctx, {
                 type: chartType,
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: propertyPath.join('.'),
+                        label: selectedKey,
                         data: values,
-                        backgroundColor: color + '80',
-                        borderColor: color,
+                        backgroundColor: colors.backgroundColor,
+                        borderColor: colors.borderColor,
                         borderWidth: 1
                     }]
                 },
@@ -292,7 +219,8 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'top'
+                            display: chartType === 'pie',
+                            position: 'right'
                         }
                     },
                     scales: chartType !== 'pie' ? {
@@ -304,31 +232,11 @@
             });
         }
 
-        // Utility functions for showing messages
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            const successDiv = document.getElementById('success');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            successDiv.style.display = 'none';
-            setTimeout(() => errorDiv.style.display = 'none', 5000);
-        }
-
-        function showSuccess(message) {
-            const errorDiv = document.getElementById('error');
-            const successDiv = document.getElementById('success');
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-            errorDiv.style.display = 'none';
-            setTimeout(() => successDiv.style.display = 'none', 3000);
-        }
-
-        // Clear all data and reset the form
-        function clearAll() {
+        // Clear all data
+        function clearData() {
             document.getElementById('jsonInput').value = '';
-            document.getElementById('analysisSection').style.display = 'none';
             document.getElementById('error').style.display = 'none';
-            document.getElementById('success').style.display = 'none';
+            document.getElementById('visSection').style.display = 'none';
             if (currentChart) {
                 currentChart.destroy();
                 currentChart = null;
