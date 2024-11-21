@@ -1,37 +1,242 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>JSON Analyzer and Plotter</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced JSON Analyzer and Plotter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .input-section {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: #ff4444;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background-color: #ffe5e5;
+            display: none;
+        }
+
+        .success {
+            color: #4CAF50;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background-color: #e5ffe5;
+            display: none;
+        }
+
+        .visualization-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tree-view {
+            font-family: monospace;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-    <h1>JSON Analyzer and Plotter</h1>
-    <textarea id="jsonInput" rows="10" cols="50"></textarea>
-    <button onclick="analyzeJSON()">Analyze JSON</button>
-    <div id="jsonInfo"></div>
-    <div id="errorMessage" style="color: red;"></div>
-    <div>
-        <label for="propertySelect">Select Property:</label>
-        <select id="propertySelect"></select>
-        <button onclick="plotProperty()">Plot Property</button>
+    <div class="container">
+        <h1>Advanced JSON Analyzer and Plotter</h1>
+        
+        <div class="input-section">
+            <div>
+                <h3>JSON Input</h3>
+                <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+            </div>
+            <div class="controls">
+                <button onclick="loadSampleData()">Load Sample Data</button>
+                <button onclick="formatJSON()">Format JSON</button>
+                <button onclick="analyzeJSON()">Analyze JSON</button>
+                <button onclick="clearAll()">Clear All</button>
+            </div>
+        </div>
+
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+
+        <div id="analysisSection" style="display: none;">
+            <div class="stats" id="jsonStats"></div>
+            
+            <div class="visualization-controls">
+                <select id="chartType">
+                    <option value="bar">Bar Chart</option>
+                    <option value="line">Line Chart</option>
+                    <option value="pie">Pie Chart</option>
+                    <option value="radar">Radar Chart</option>
+                </select>
+                
+                <select id="propertySelect"></select>
+                
+                <input type="color" id="colorPicker" value="#4CAF50">
+                
+                <button onclick="visualizeData()">Visualize</button>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="chart"></canvas>
+            </div>
+
+            <h3>JSON Structure</h3>
+            <div id="treeView" class="tree-view"></div>
+        </div>
     </div>
-    <canvas id="chart"></canvas>
 
     <script>
-        let jsonData;
+        let currentChart = null;
+        let jsonData = null;
+
+        function loadSampleData() {
+            const sampleData = {
+                "monthly_sales": {
+                    "January": 1200,
+                    "February": 1500,
+                    "March": 1800,
+                    "April": 1600,
+                    "May": 2000
+                },
+                "customer_satisfaction": {
+                    "Q1": 4.5,
+                    "Q2": 4.7,
+                    "Q3": 4.6,
+                    "Q4": 4.8
+                }
+            };
+            document.getElementById('jsonInput').value = JSON.stringify(sampleData, null, 2);
+            analyzeJSON();
+        }
+
+        function formatJSON() {
+            try {
+                const input = document.getElementById('jsonInput').value;
+                const formatted = JSON.stringify(JSON.parse(input), null, 2);
+                document.getElementById('jsonInput').value = formatted;
+                showSuccess('JSON formatted successfully');
+            } catch (error) {
+                showError('Invalid JSON format');
+            }
+        }
 
         function analyzeJSON() {
-            const jsonInput = document.getElementById('jsonInput').value;
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.textContent = '';
-
+            const input = document.getElementById('jsonInput').value;
             try {
-                jsonData = JSON.parse(jsonInput);
-                displayJSONInfo();
-                populatePropertySelect();
+                jsonData = JSON.parse(input);
+                document.getElementById('analysisSection').style.display = 'block';
+                updateStats();
+                updatePropertySelect();
+                visualizeData();
+                showSuccess('JSON analyzed successfully');
+                displayJSONTree();
             } catch (error) {
-                errorMessage.textContent = 'Invalid JSON format. Please enter valid JSON data.';
+                showError('Invalid JSON format: ' + error.message);
             }
+        }
+
+        function updateStats() {
+            const stats = document.getElementById('jsonStats');
+            const allKeys = getAllKeys(jsonData);
+            const depth = getJSONDepth(jsonData);
+            
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <h4>Total Keys</h4>
+                    <div>${allKeys.length}</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Nesting Depth</h4>
+                    <div>${depth}</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Size</h4>
+                    <div>${JSON.stringify(jsonData).length} chars</div>
+                </div>
+            `;
         }
 
         function getAllKeys(obj, prefix = '') {
@@ -47,54 +252,115 @@
             return keys;
         }
 
-        function displayJSONInfo() {
-            const jsonInfo = document.getElementById('jsonInfo');
-            const allKeys = getAllKeys(jsonData);
-            jsonInfo.innerHTML = `
-                <p>Number of Keys: ${allKeys.length}</p>
-                <p>Keys:</p>
-                <ul>
-                    ${allKeys.map(key => `<li>${key}</li>`).join('')}
-                </ul>
-            `;
+        function getJSONDepth(obj, depth = 1) {
+            if (typeof obj !== 'object' || obj === null) return depth;
+            return Math.max(...Object.values(obj).map(v => getJSONDepth(v, depth + 1)));
         }
 
-        function populatePropertySelect() {
-            const propertySelect = document.getElementById('propertySelect');
-            propertySelect.innerHTML = '';
-            for (const prop in jsonData) {
-                const option = document.createElement('option');
-                option.value = prop;
-                option.text = prop;
-                propertySelect.appendChild(option);
+        function updatePropertySelect() {
+            const select = document.getElementById('propertySelect');
+            select.innerHTML = '';
+            
+            function addOptions(obj, prefix = '') {
+                for (const key in obj) {
+                    if (typeof obj[key] === 'object' && obj[key] !== null) {
+                        addOptions(obj[key], prefix + key + '.');
+                    } else if (Array.isArray(obj[key]) || typeof obj[key] === 'number') {
+                        const option = document.createElement('option');
+                        option.value = prefix + key;
+                        option.text = prefix + key;
+                        select.appendChild(option);
+                    }
+                }
             }
+            
+            addOptions(jsonData);
         }
 
-        function plotProperty() {
-            const propertySelect = document.getElementById('propertySelect');
-            const selectedProperty = propertySelect.value;
-            const propertyData = jsonData[selectedProperty];
+        function visualizeData() {
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            const propertyPath = document.getElementById('propertySelect').value;
+            const chartType = document.getElementById('chartType').value;
+            const color = document.getElementById('colorPicker').value;
+
+            let data = jsonData;
+            propertyPath.split('.').forEach(key => {
+                data = data[key];
+            });
 
             const ctx = document.getElementById('chart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
+            
+            const chartConfig = {
+                type: chartType,
                 data: {
-                    labels: Object.keys(propertyData),
+                    labels: Array.isArray(data) ? Array.from(data.keys()) : Object.keys(data),
                     datasets: [{
-                        label: selectedProperty,
-                        data: Object.values(propertyData),
-                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        label: propertyPath,
+                        data: Array.isArray(data) ? data : Object.values(data),
+                        backgroundColor: color + '80',
+                        borderColor: color,
                         borderWidth: 1
                     }]
                 },
                 options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
                         }
                     }
                 }
-            });
+            };
+
+            currentChart = new Chart(ctx, chartConfig);
+        }
+
+        function displayJSONTree() {
+            const treeView = document.getElementById('treeView');
+            
+            function createTree(obj, depth = 0) {
+                if (obj === null) return 'null';
+                if (typeof obj !== 'object') return String(obj);
+                
+                const indent = '  '.repeat(depth);
+                const entries = Object.entries(obj);
+                
+                return entries.map(([key, value]) => {
+                    const formattedValue = typeof value === 'object' ? 
+                        '\n' + createTree(value, depth + 1) :
+                        ' ' + String(value);
+                    return `${indent}${key}:${formattedValue}`;
+                }).join('\n');
+            }
+            
+            treeView.textContent = createTree(jsonData);
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+            setTimeout(() => error.style.display = 'none', 5000);
+        }
+
+        function showSuccess(message) {
+            const success = document.getElementById('success');
+            success.textContent = message;
+            success.style.display = 'block';
+            setTimeout(() => success.style.display = 'none', 3000);
+        }
+
+        function clearAll() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('analysisSection').style.display = 'none';
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
         }
     </script>
 </body>
