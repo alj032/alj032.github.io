@@ -69,36 +69,8 @@
 </head>
 <body class="w3-black">
 
-<!-- Sidebar -->
-<nav class="w3-sidebar w3-bar-block w3-small w3-hide-small w3-center">
-    <img src="/images/init.jpg" style="width:100%; border-radius: 8px; margin-top: 16px;">
-    <a href="#" class="w3-bar-item w3-button w3-padding-large w3-black">
-        <i class="fa fa-home w3-xxlarge"></i>
-        <p>HOME</p>
-    </a>
-    <a href="#about" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
-        <i class="fa fa-user w3-xxlarge"></i>
-        <p>ABOUT</p>
-    </a>
-    <a href="#blog" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
-        <i class="fa fa-blog w3-xxlarge"></i>
-        <p>BLOG</p>
-    </a>
-    <a href="#contact" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
-        <i class="fa fa-envelope w3-xxlarge"></i>
-        <p>CONTACT</p>
-    </a>
-</nav>
-
-<!-- Navbar on small screens -->
-<div class="w3-top w3-hide-large w3-hide-medium" id="myNavbar">
-    <div class="w3-bar w3-black w3-opacity w3-hover-opacity-off w3-center w3-small">
-        <a href="#" class="w3-bar-item w3-button" style="width:25%">HOME</a>
-        <a href="#about" class="w3-bar-item w3-button" style="width:25%">ABOUT</a>
-        <a href="#blog" class="w3-bar-item w3-button" style="width:25%">BLOG</a>
-        <a href="#contact" class="w3-bar-item w3-button" style="width:25%">CONTACT</a>
-    </div>
-</div>
+<!-- Sidebar container -->
+<div id="sidebarContainer"></div>
 
 <!-- Page Content -->
 <div class="w3-padding-large" id="main">
@@ -243,6 +215,38 @@
         </a>
     </footer>
 </div>
+
+<!-- Include the sidebar script -->
+<script src="path/to/sidebar.js"></script>
+
+<!-- Initialize the sidebar -->
+<script>
+        // Basic usage with default options
+        const sidebar = new Sidebar();
+
+        <!-- // Or with custom options
+        const sidebarWithOptions = new Sidebar({
+            containerId: 'sidebarContainer',
+            profileImage: '/path/to/custom-image.jpg',
+            menuItems: [
+                { id: 'home', icon: 'fa-home', text: 'HOME', link: '#' },
+                { id: 'portfolio', icon: 'fa-briefcase', text: 'PORTFOLIO', link: '#portfolio' },
+                { id: 'contact', icon: 'fa-envelope', text: 'CONTACT', link: '#contact' }
+            ]
+        });
+
+        // Update active item based on scroll position (optional)
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section');
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top >= 0 && rect.top <= window.innerHeight / 2) {
+                    sidebar.setActiveItem(section.id);
+                }
+            });
+        }); -->
+
+    </script>
 
 </body>
 </html>
