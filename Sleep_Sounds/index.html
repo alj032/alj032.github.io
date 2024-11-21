@@ -1,240 +1,145 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sleep Sounds</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a1a1a">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a1a;
-            color: #ffffff;
-            min-height: 100vh;
-            padding: 20px;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+      min-height: 100vh;
+    }
 
-        .header {
-            text-align: center;
-            padding: 20px 0;
-        }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
 
-        .sound-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    .timer-container {
+      text-align: center;
+      margin: 20px auto;
+      max-width: 300px;
+    }
 
-        .sound-card {
-            background: #2d2d2d;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            position: relative;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+    .timer-select {
+      background: #2d2d2d;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      width: 100%;
+      margin-top: 10px;
+    }
 
-        .sound-card:hover {
-            transform: translateY(-5px);
-            background: #3d3d3d;
-        }
+    .sound-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
 
-        .sound-card.playing {
-            background: #4a4a4a;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-        }
+    .sound-card {
+      background: #2d2d2d;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
 
-        .sound-icon {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
+    .sound-card:hover {
+      transform: translateY(-5px);
+      background: #3d3d3d;
+    }
 
-        .volume-container {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(45, 45, 45, 0.9);
-            padding: 15px 25px;
-            border-radius: 25px;
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            z-index: 10;
-        }
+    .sound-icon {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
 
-        .volume-slider {
-            width: 200px;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 4px;
-            background: #666;
-            border-radius: 2px;
-        }
+    .volume-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(45, 45, 45, 0.9);
+      padding: 15px 25px;
+      border-radius: 25px;
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      z-index: 10;
+    }
 
-        .volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 15px;
-            height: 15px;
-            background: #fff;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .timer-container {
-            text-align: center;
-            margin: 20px auto;
-            max-width: 300px;
-        }
-
-        .timer-select {
-            background: #2d2d2d;
-            color: white;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            width: 100%;
-            margin-top: 10px;
-        }
-    </style>
+    @media (max-width: 768px) {
+      .sound-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Sleep Sounds</h1>
+  <div class="header">
+    <h1>Sleep Sounds</h1>
+  </div>
+
+  <div class="timer-container">
+    <select id="timer" class="timer-select">
+      <option value="0">Continuous</option>
+      <option value="900">15 Minutes</option>
+      <option value="1800">30 Minutes</option>
+      <option value="3600">1 Hour</option>
+      <option value="7200">2 Hours</option>
+    </select>
+  </div>
+
+  <div class="sound-grid">
+    <div class="sound-card">
+      <div class="sound-icon">🌊</div>
+      <div>White Noise</div>
     </div>
-
-    <div class="timer-container">
-        <select id="timer" class="timer-select">
-            <option value="0">Continuous</option>
-            <option value="900">15 Minutes</option>
-            <option value="1800">30 Minutes</option>
-            <option value="3600">1 Hour</option>
-            <option value="7200">2 Hours</option>
-        </select>
+    <div class="sound-card">
+      <div class="sound-icon">🌧</div>
+      <div>Rain</div>
     </div>
-
-    <div class="sound-grid" id="soundGrid"></div>
-
-    <div class="volume-container">
-        <span>🔊</span>
-        <input type="range" class="volume-slider" id="masterVolume" min="0" max="1" step="0.01" value="0.5">
+    <div class="sound-card">
+      <div class="sound-icon">🌊</div>
+      <div>Ocean</div>
     </div>
+    <div class="sound-card">
+      <div class="sound-icon">💨</div>
+      <div>Fan</div>
+    </div>
+    <div class="sound-card">
+      <div class="sound-icon">🌳</div>
+      <div>Forest</div>
+    </div>
+    <div class="sound-card">
+      <div class="sound-icon">💧</div>
+      <div>Stream</div>
+    </div>
+  </div>
 
-    <script>
-        const sounds = [
-            { name: 'White Noise', icon: '🌊', file: 'white-noise.mp3' },
-            { name: 'Rain', icon: '🌧', file: 'rain.mp3' },
-            { name: 'Ocean', icon: '🌊', file: 'ocean.mp3' },
-            { name: 'Fan', icon: '💨', file: 'fan.mp3' },
-            { name: 'Forest', icon: '🌳', file: 'forest.mp3' },
-            { name: 'Stream', icon: '💧', file: 'stream.mp3' }
-        ];
-
-        let activeAudio = null;
-        let timerTimeout = null;
-
-        function createSoundCard(sound) {
-            const card = document.createElement('div');
-            card.className = 'sound-card';
-            card.innerHTML = `
-                <div class="sound-icon">${sound.icon}</div>
-                <div>${sound.name}</div>
-            `;
-
-            const audio = new Audio(`sounds/${sound.file}`);
-            audio.loop = true;
-
-            card.addEventListener('click', () => {
-                if (activeAudio === audio && !audio.paused) {
-                    audio.pause();
-                    card.classList.remove('playing');
-                    activeAudio = null;
-                    clearTimeout(timerTimeout);
-                } else {
-                    if (activeAudio) {
-                        activeAudio.pause();
-                        document.querySelector('.playing')?.classList.remove('playing');
-                    }
-                    audio.volume = masterVolume.value;
-                    audio.play();
-                    card.classList.add('playing');
-                    activeAudio = audio;
-                    startTimer();
-                }
-            });
-
-            return card;
-        }
-
-        // Handle volume changes
-        const masterVolume = document.getElementById('masterVolume');
-        masterVolume.addEventListener('input', (e) => {
-            const volume = e.target.value;
-            if (activeAudio) {
-                activeAudio.volume = volume;
-            }
-            
-            // Try to update system volume if supported
-            if ('mediaSession' in navigator) {
-                try {
-                    navigator.mediaSession.setVolume(volume);
-                } catch (error) {
-                    console.log('System volume control not supported');
-                }
-            }
-        });
-
-        function startTimer() {
-            clearTimeout(timerTimeout);
-            const duration = parseInt(document.getElementById('timer').value);
-            if (duration > 0) {
-                timerTimeout = setTimeout(() => {
-                    if (activeAudio) {
-                        activeAudio.pause();
-                        document.querySelector('.playing')?.classList.remove('playing');
-                        activeAudio = null;
-                    }
-                }, duration * 1000);
-            }
-        }
-
-        // Initialize the app
-        const soundGrid = document.getElementById('soundGrid');
-        sounds.forEach(sound => {
-            soundGrid.appendChild(createSoundCard(sound));
-        });
-
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
-        }
-    </script>
+  <div class="volume-container">
+    <span>🔊</span>
+    <input type="range" class="volume-slider" id="masterVolume" min="0" max="1" step="0.01" value="0.5">
+  </div>
 </body>
 </html>
