@@ -1,289 +1,248 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Austin's Portfolio</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="/images/init.jpg">
-<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<style>
-body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
-.w3-row-padding img {margin-bottom: 12px}
-/* Set the width of the sidebar to 120px */
-.w3-sidebar {width: 120px;background: #222;}
-/* Add a left margin to the "page content" that matches the width of the sidebar (120px) */
-#main {margin-left: 120px}
-/* Remove margins from "page content" on small screens */
-@media only screen and (max-width: 600px) {#main {margin-left: 0}}
+    <title>Austin's Portfolio</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Austin Jackson - Software Engineer and Technology Advocate">
+    <link rel="icon" href="/images/init.jpg">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,500,600,700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body, h1, h2, h3, h4, h5, h6 {
+            font-family: "Inter", sans-serif;
+        }
 
-    #banner {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 40px;
-      background-color: #333;
-      color: #fff;
-      font-size: 20px;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-	
-	.fixed-bg {
-	  background-image: url("/images/aj.jpg");
-	  background-attachment: fixed;
-	  background-position: center;
-	  background-repeat: no-repeat;
-	  background-size: cover;
-	  border-radius: 50px; 
-	  max-height: 80vw;
-	}
-	
-</style>
+        .w3-row-padding img {
+            margin-bottom: 12px;
+        }
 
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7257827927320579"
-     crossorigin="anonymous"></script>
+        .w3-sidebar {
+            width: 120px;
+            background: #111;
+            transition: 0.3s;
+        }
+
+        #main {
+            margin-left: 120px;
+            transition: 0.3s;
+        }
+
+        .skill-bar {
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            margin-bottom: 20px;
+        }
+
+        .skill-fill {
+            height: 100%;
+            background: #4CAF50;
+            border-radius: 3px;
+            transition: width 1s ease-in-out;
+        }
+
+        .blog-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .blog-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .social-icon {
+            transition: color 0.3s ease;
+        }
+
+        .social-icon:hover {
+            color: #4CAF50;
+        }
+
+        @media only screen and (max-width: 600px) {
+            #main {
+                margin-left: 0;
+            }
+        }
+    </style>
 </head>
 <body class="w3-black">
 
-<!-- Icon Bar (Sidebar - hidden on small screens) -->
+<!-- Sidebar -->
 <nav class="w3-sidebar w3-bar-block w3-small w3-hide-small w3-center">
-  <!-- Avatar image in top left corner -->
-  <img src="/images/init.jpg" style="width:100%; border-radius: 50px;">
-  <a href="#" class="w3-bar-item w3-button w3-padding-large w3-black">
-    <i class="fa fa-home w3-xxlarge"></i>
-    <p>HOME</p>
-  </a>
-  <a href="#about" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
-    <i class="fa fa-user w3-xxlarge"></i>
-    <p>ABOUT</p>
-  </a>
-    <a href="#pricing" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
-    <i class="fa fa-dollar w3-xxlarge"></i>
-    <p>PRICING</p>
-  </a>
-  <a href="#blog" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
-    <i class="fa fa-rss w3-xxlarge"></i>
-    <p>BLOG</p>
-  </a>
-  <a href="#contact" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
-    <i class="fa fa-envelope w3-xxlarge"></i>
-    <p>CONTACT</p>
-  </a>
+    <img src="/images/init.jpg" style="width:100%; border-radius: 8px; margin-top: 16px;">
+    <a href="#" class="w3-bar-item w3-button w3-padding-large w3-black">
+        <i class="fa fa-home w3-xxlarge"></i>
+        <p>HOME</p>
+    </a>
+    <a href="#about" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
+        <i class="fa fa-user w3-xxlarge"></i>
+        <p>ABOUT</p>
+    </a>
+    <a href="#blog" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
+        <i class="fa fa-blog w3-xxlarge"></i>
+        <p>BLOG</p>
+    </a>
+    <a href="#contact" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
+        <i class="fa fa-envelope w3-xxlarge"></i>
+        <p>CONTACT</p>
+    </a>
 </nav>
 
-<!-- Navbar on small screens (Hidden on medium and large screens) -->
+<!-- Navbar on small screens -->
 <div class="w3-top w3-hide-large w3-hide-medium" id="myNavbar">
-  <div class="w3-bar w3-black w3-opacity w3-hover-opacity-off w3-center w3-small">
-    <a href="#" class="w3-bar-item w3-button" style="width:25% !important">HOME</a>
-    <a href="#about" class="w3-bar-item w3-button" style="width:25% !important">ABOUT</a>
-    <a href="#blog" class="w3-bar-item w3-button" style="width:25% !important">BLOG</a>
-    <a href="#contact" class="w3-bar-item w3-button" style="width:25% !important">CONTACT</a>
-  </div>
+    <div class="w3-bar w3-black w3-opacity w3-hover-opacity-off w3-center w3-small">
+        <a href="#" class="w3-bar-item w3-button" style="width:25%">HOME</a>
+        <a href="#about" class="w3-bar-item w3-button" style="width:25%">ABOUT</a>
+        <a href="#blog" class="w3-bar-item w3-button" style="width:25%">BLOG</a>
+        <a href="#contact" class="w3-bar-item w3-button" style="width:25%">CONTACT</a>
+    </div>
 </div>
-
-
-<marquee id="banner" bgcolor="gray" font style="bold" scrolldelay="100"><font size="5" face="Verdana"><font color="white">Thanks for visting!</marquee>
-
 
 <!-- Page Content -->
 <div class="w3-padding-large" id="main">
-  <div class="w3-col w3-section">
-  		<header class="w3-container w3-padding-32 w3-center w3-black" id="home">
-		<h1 class="w3-jumbo">Austin</h1>
-		<p>Software Engineer and Technology Advocate</p>
-		</header>
-  </div>
-  
-<div class="w3-row w3-content w3-justify w3-padding-64">
-  <div class="w3-half w3-section" style="text-align: center; height: 100%; padding: 20px;">
-    <img src="/images/aj.jpg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50px;">
-  </div>
+    <!-- Header -->
+    <header class="w3-container w3-padding-32 w3-center w3-black" id="home">
+        <h1 class="w3-jumbo">Austin Jackson</h1>
+        <p class="w3-large">Software Engineer and Technology Advocate</p>
+    </header>
 
-  <div class="w3-half w3-section" style="padding: 20px;">
-    <h2 class="w3-text-light-grey">About Me</h2>
-    <hr style="width:200px" class="w3-opacity">
-    <div>
-      <p>Software Engineer with 5+ years of experience in designing, developing, and implementing robust software solutions. Skilled in multiple programming languages including Java, Python, and JavaScript, with expertise in object-oriented programming, data structures, and algorithms. Proven ability to translate requirements into high-quality, scalable code.
+    <!-- About Section -->
+    <div class="w3-row w3-content w3-justify w3-padding-64">
+        <div class="w3-half w3-section" style="text-align: center; padding: 20px;">
+            <img src="/images/aj.jpg" style="width: 100%; max-width: 400px; height: auto; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+        </div>
 
-      Experienced in the full software development life cycle, from requirements gathering and system design to coding, testing, deployment, and maintenance.
-
-      Strong problem-solving skills with the ability to debug complex issues and optimize application performance.
-
-      Proficient in agile methodologies like Scrum and Kanban, collaborating closely with cross-functional teams.
-
-      Experience with version control systems like Git and continuous integration/continuous deployment (CI/CD) pipelines.
-
-      Solid understanding of software architecture principles, design patterns, and best coding practices.
-
-      Passion for learning and staying up-to-date with the latest technologies and industry trends.
-
-      Core Competencies: Java, Python, JavaScript, Agile, Git, CI/CD, OOP, Data Structures, Algorithms, Software Architecture
-      </p>
-    </div>
-  </div>
-</div>
-  
-  <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="alj032" data-description="Support me on Buy me a coffee!" data-message="Thanks for visting! Consider supporting me! - Austin" data-color="#FF813F" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
-
-  
-  <div class="w3-content w3-justify w3-text-grey w3-padding-64" id="about">
-
-	    <h3 class="w3-padding-16 w3-text-light-grey">My Skills</h3>
-		<hr style="width:200px" class="w3-opacity">
-		<p class="w3-wide">Software Engineering</p>
-		<p class="w3-wide">Devops</p>
-		<p class="w3-wide">Azure</p>
-		<p class="w3-wide">Docker</p>
-		<p class="w3-wide">Documentation</p>
-    
-    <div class="w3-row w3-center w3-padding-16 w3-section w3-light-grey">
-      <div class="w3-third w3-section">
-        <span class="w3-xlarge">30+</span><br>
-        Projects
-      </div>
-      <div class="w3-third w3-section">
-        <span class="w3-xlarge">Countless</span><br>
-        Happy Clients
-      </div>
-      <div class="w3-third w3-section">
-        <span class="w3-xlarge">Endless</span><br>
-        Possibilities
-      </div>
+        <div class="w3-half w3-section" style="padding: 20px;">
+            <h2 class="w3-text-light-grey">About Me</h2>
+            <hr style="width:200px" class="w3-opacity">
+            <p>
+                Software Engineer with 5+ years of experience in designing and implementing robust software solutions. 
+                Specializing in full-stack development with expertise in:
+            </p>
+            <ul class="w3-text-grey">
+                <li>Java, Python, and JavaScript development</li>
+                <li>Cloud architecture and DevOps practices</li>
+                <li>Agile methodologies and team leadership</li>
+                <li>System design and optimization</li>
+            </ul>
+            <p>
+                Passionate about creating efficient, scalable solutions and staying current with emerging technologies.
+            </p>
+        </div>
     </div>
 
-    <button class="w3-button w3-light-grey w3-padding-large w3-section">
-      <i class="fa fa-download"></i> Download Resume
-    </button>
-    
-    <!-- Grid for pricing tables -->
-    <h3 id="pricing" class="w3-padding-16 w3-text-light-grey">My Price</h3>
-	<hr style="width:200px" class="w3-opacity">
-    <div class="w3-row-padding" style="margin:0 -16px">
-      <div class="w3-half w3-margin-bottom">
-        <ul class="w3-ul w3-white w3-center w3-opacity w3-hover-opacity-off">
-          <li class="w3-dark-grey w3-xlarge w3-padding-32">Basic</li>
-          <li class="w3-padding-16">Web Site</li>
-		  <li class="w3-padding-16">Custom domain</li>
-          <li class="w3-padding-16">2 Revisions</li>
-          <li class="w3-padding-16">
-            <h2>$ 150</h2>
-            <span class="w3-opacity">per year</span>
-          </li>
-          <li class="w3-light-grey w3-padding-24">
-		    <a href="#contact" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
-				<i class="fa fa-envelope w3-xxlarge"></i>
-				<p>CONTACT</p>
-			</a>
-          </li>
-        </ul>
-      </div>
-	  
-	        <div class="w3-half w3-margin-bottom">
-        <ul class="w3-ul w3-white w3-center w3-opacity w3-hover-opacity-off">
-          <li class="w3-dark-grey w3-xlarge w3-padding-32">Consulting</li>
-		  <li class="w3-padding-16">Software</li>
-		  <li class="w3-padding-16">Hardware</li>
-          <li class="w3-padding-16">General Technology Questions</li>
-          <li class="w3-padding-16">
-            <h2>Custom Price</h2>
-			<span class="w3-opacity">per project</span>
-          </li>
-          <li class="w3-light-grey w3-padding-24">
-		    <a href="#contact" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
-				<i class="fa fa-envelope w3-xxlarge"></i>
-				<p>CONTACT</p>
-			</a>
-          </li>
-        </ul>
-      </div>
-    <!-- End Grid/Pricing tables -->
+    <!-- Skills Section -->
+    <div class="w3-padding-64 w3-content">
+        <h2 class="w3-text-light-grey">Technical Skills</h2>
+        <hr style="width:200px" class="w3-opacity">
+        
+        <div class="w3-row-padding" style="margin:0 -16px">
+            <div class="w3-half">
+                <p class="w3-wide">Software Engineering</p>
+                <div class="skill-bar">
+                    <div class="skill-fill" style="width:95%"></div>
+                </div>
+                <p class="w3-wide">DevOps</p>
+                <div class="skill-bar">
+                    <div class="skill-fill" style="width:85%"></div>
+                </div>
+            </div>
+            <div class="w3-half">
+                <p class="w3-wide">Azure Cloud</p>
+                <div class="skill-bar">
+                    <div class="skill-fill" style="width:90%"></div>
+                </div>
+                <p class="w3-wide">Docker</p>
+                <div class="skill-bar">
+                    <div class="skill-fill" style="width:88%"></div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  
-  <!-- Portfolio Section -->
-  <div class="w3-padding-64 w3-content" id="blog">
-      <h2 class="w3-text-light-grey">My Blog</h2>
-      <hr style="width:200px" class="w3-opacity">
 
-      <a href="/Blogs/Caffiene_Calculator">
-          <div class="w3-col w3-margin-bottom">
-              <ul class="w3-ul w3-white w3-center w3-opacity w3-hover-opacity-off">
-                  <li class="w3-dark-grey w3-xlarge w3-padding-32">Caffiene Calculator</li>
-              </ul>
-          </div>
-      </a>
+    <!-- Blog Section -->
+    <div class="w3-padding-64 w3-content" id="blog">
+        <h2 class="w3-text-light-grey">Latest Posts</h2>
+        <hr style="width:200px" class="w3-opacity">
 
-      <a href="/Blogs/Location_Plotting">
-          <div class="w3-col w3-margin-bottom">
-              <ul class="w3-ul w3-white w3-center w3-opacity w3-hover-opacity-off">
-                  <li class="w3-dark-grey w3-xlarge w3-padding-32">Location Tracking</li>
-              </ul>
-          </div>
-      </a>
+        <div class="w3-row-padding">
+            <div class="w3-half w3-margin-bottom">
+                <a href="/Blogs/Caffiene_Calculator" class="blog-card">
+                    <div class="w3-card w3-dark-grey w3-padding-16 w3-center">
+                        <i class="fas fa-coffee w3-xxlarge w3-padding-16"></i>
+                        <h3>Caffeine Calculator</h3>
+                        <p>Track and optimize your caffeine intake</p>
+                    </div>
+                </a>
+            </div>
 
-      <a href="/Blogs/Spinning_World">
-          <div class="w3-col w3-margin-bottom">
-              <ul class="w3-ul w3-white w3-center w3-opacity w3-hover-opacity-off">
-                  <li class="w3-dark-grey w3-xlarge w3-padding-32">3d World</li>
-              </ul>
-          </div>
-      </a>
+            <div class="w3-half w3-margin-bottom">
+                <a href="/Blogs/Location_Plotting" class="blog-card">
+                    <div class="w3-card w3-dark-grey w3-padding-16 w3-center">
+                        <i class="fas fa-map-marker-alt w3-xxlarge w3-padding-16"></i>
+                        <h3>Location Tracking</h3>
+                        <p>Exploring geolocation technologies</p>
+                    </div>
+                </a>
+            </div>
 
-      <a href="/Blogs/Plotting_Airplanes">
-          <div class="w3-col w3-margin-bottom">
-              <ul class="w3-ul w3-white w3-center w3-opacity w3-hover-opacity-off">
-                  <li class="w3-dark-grey w3-xlarge w3-padding-32">Plotting Airplanes</li>
-              </ul>
-          </div>
-      </a>
+            <div class="w3-half w3-margin-bottom">
+                <a href="/Blogs/Spinning_World" class="blog-card">
+                    <div class="w3-card w3-dark-grey w3-padding-16 w3-center">
+                        <i class="fas fa-globe w3-xxlarge w3-padding-16"></i>
+                        <h3>3D World Visualization</h3>
+                        <p>Creating interactive 3D globe visualizations</p>
+                    </div>
+                </a>
+            </div>
 
-      <a href="/Blogs/JSONViewer/Index">
-          <div class="w3-col w3-margin-bottom">
-              <ul class="w3-ul w3-white w3-center w3-opacity w3-hover-opacity-off">
-                  <li class="w3-dark-grey w3-xlarge w3-padding-32">JSON Viewer</li>
-              </ul>
-          </div>
-      </a>
+            <div class="w3-half w3-margin-bottom">
+                <a href="/Blogs/JSONViewer/Index" class="blog-card">
+                    <div class="w3-card w3-dark-grey w3-padding-16 w3-center">
+                        <i class="fas fa-code w3-xxlarge w3-padding-16"></i>
+                        <h3>JSON Viewer</h3>
+                        <p>A modern JSON visualization tool</p>
+                    </div>
+                </a>
+            </div>
 
-      <a href="/Games/Talking_Bird/Index">
-          <div class="w3-col w3-margin-bottom">
-              <ul class="w3-ul w3-white w3-center w3-opacity w3-hover-opacity-off">
-                  <li class="w3-dark-grey w3-xlarge w3-padding-32">Pixel Art</li>
-              </ul>
-          </div>
-      </a>
-      <!-- End Portfolio Section -->
-  </div>
+            <div class="w3-half w3-margin-bottom">
+                <a href="/Sleep_Sounds/index.html" class="blog-card">
+                    <div class="w3-card w3-dark-grey w3-padding-16 w3-center">
+                        <i class="fas fa-code w3-xxlarge w3-padding-16"></i>
+                        <h3>Sleep Sounds</h3>
+                        <p>A free white noise PWA</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
 
-  <!-- Contact Section -->
-  <div class="w3-padding-64 w3-content w3-text-grey" id="contact">
-    <h2 class="w3-text-light-grey">Contact Me</h2>
-    <hr style="width:200px" class="w3-opacity">
+    <!-- Contact Section -->
+    <div class="w3-padding-64 w3-content w3-text-grey" id="contact">
+        <h2 class="w3-text-light-grey">Contact Me</h2>
+        <hr style="width:200px" class="w3-opacity">
 
-    <div class="w3-section">
-      <p><i class="fa fa-map-marker fa-fw w3-text-white w3-xxlarge w3-margin-right"></i> Arkansas, US</p>
-      <p><i class="fa fa-envelope fa-fw w3-text-white w3-xxlarge w3-margin-right"> </i> Email: austinleejack@gmail.com</p>
-    </div><br>
-    <p>I would love to collaborate with you! Let's get in touch. Send me a message.</p>
-  <!-- End Contact Section -->
-  </div>
-  
+        <div class="w3-section">
+            <p><i class="fa fa-map-marker fa-fw w3-text-white w3-xlarge w3-margin-right"></i>Arkansas, US</p>
+            <p><i class="fa fa-envelope fa-fw w3-text-white w3-xlarge w3-margin-right"></i>austinleejack@gmail.com</p>
+        </div>
+        
+        <p>Let's collaborate on your next project!</p>
+    </div>
+
     <!-- Footer -->
-  <footer class="w3-content w3-padding-64 w3-text-grey w3-xlarge">
-	<a href="https://github.com/alj032" class="w3-bar-item w3-button w3-padding-large w3-hover-opacity">
-		<i class="fa fa-github w3-xxlarge"></i>
-	</a>
-  	<a href="https://www.linkedin.com/in/austin-l-jackson/" class="w3-bar-item w3-button w3-padding-large w3-hover-opacity">
-		<i class="fa fa-linkedin w3-xxlarge"></i>
-	</a>
-  <!-- End footer -->
-  </footer>
-
-<!-- END PAGE CONTENT -->
+    <footer class="w3-content w3-padding-64 w3-text-grey w3-xlarge">
+        <a href="https://github.com/alj032" class="w3-padding-large social-icon">
+            <i class="fab fa-github w3-xxlarge"></i>
+        </a>
+        <a href="https://www.linkedin.com/in/austin-l-jackson/" class="w3-padding-large social-icon">
+            <i class="fab fa-linkedin w3-xxlarge"></i>
+        </a>
+    </footer>
 </div>
+
 </body>
 </html>
-
