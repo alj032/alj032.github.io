@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <title>Audio Player PWA</title>
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div id="player-container">
+        <input type="file" id="file-input" multiple accept="audio/*">
+        <button id="save-playlist">Save Playlist</button>
+        <button id="load-playlist">Load Playlist</button>
+        
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="Search songs...">
+        </div>
+
+        <div id="playlist-container">
+            <h3>Playlist</h3>
+            <ul id="playlist"></ul>
+        </div>
+
+        <div id="controls">
+            <audio id="audio-player"></audio>
+            <div id="time-info">
+                <span id="current-time">0:00</span> / 
+                <span id="duration">0:00</span>
+            </div>
+            <input type="range" id="seek-slider" min="0" max="100" value="0">
+            <button id="prev">Previous</button>
+            <button id="play-pause">Play</button>
+            <button id="next">Next</button>
+            <input type="range" id="volume" min="0" max="100" value="100">
+        </div>
+    </div>
+
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(error => {
+                console.error('Service Worker registration failed:', error);
+            });
+        }
+
+        // Main app logic
+        class AudioPlayerApp {
+            constructor() {
+                this.audioPlayer = document.getElementById('audio-player');
+                this.playlist = document.getElementById('playlist');
+                this.playPauseBtn = document.getElementById('play-pause');
+                this.prevBtn = document.getElementById('prev');
+                this.nextBtn = document.getElementById('next');
+                this.seekSlider = document.getElementById('seek-slider');
+                this.volumeSlider = document.getElementById('volume');
+                this.searchInput = document.getElementById('search-input');
+                this.currentTimeSpan = document.getElementById('current-time');
+                this.durationSpan = document.getElementById('duration');
+                
+                this.songs = [];
+                this.currentSongIndex = 0;
+
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                // File input handling
+                document.getElementById('file-input').addEventListener('change', (e) => {
+                    this.handleFileSelect(e);
+                });
+
+                // Playback controls
+                this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
+                this.prevBtn.addEventListener('click', () => this.playPrevious());
+                this.nextBtn.addEventListener('click', () => this.playNext());
+                
+                // Audio player events
+                this.audioPlayer.addEventListener('timeupdate', () => this.updateTimeInfo());
+                this.audioPlayer.addEventListener('ended', () => this.playNext());
+                
+                // Seek and volume controls
+                this.seekSlider.addEventListener('input', () => this.handleSeek());
+                this.volumeSlider.addEventListener('input', () => {
+                    this.audioPlayer.volume = this.volumeSlider.value / 100;
+                });
+
+                // Search functionality
+                this.searchInput.addEventListener('input', () => this.handleSearch());
+
+                // Save/Load playlist
+                document.getElementById('save-playlist').addEventListener('click', () => this.savePlaylist());
+                document.getElementById('load-playlist').addEventListener('click', () => this.loadPlaylist());
+            }
+
+            async handleFileSelect(event) {
+                const files = Array.from(event.target.files);
+                this.songs = this.songs.concat(files);
+                this.updatePlaylist();
+                if (this.songs.length === files.length) {
+                    this.playSong(0);
+                }
+            }
+
+            updatePlaylist() {
+                this.playlist.innerHTML = '';
+                this.songs.forEach((song, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = song.name;
+                    li.addEventListener('click', () => this.playSong(index));
+                    if (index === this.currentSongIndex) {
+                        li.style.fontWeight = 'bold';
+                    }
+                    this.playlist.appendChild(li);
+                });
+            }
+
+            playSong(index) {
+                if (index >= 0 && index < this.songs.length) {
+                    this.currentSongIndex = index;
+                    const song = this.songs[index];
+                    const url = URL.createObjectURL(song);
+                    this.audioPlayer.src = url;
+                    this.audioPlayer.play();
+                    this.playPauseBtn.textContent = 'Pause';
+                    this.updatePlaylist();
+                }
+            }
+
+            togglePlayPause() {
+                if (this.audioPlayer.paused) {
+                    this.audioPlayer.play();
+                    this.playPauseBtn.textContent = 'Pause';
+                } else {
+                    this.audioPlayer.pause();
+                    this.playPauseBtn.textContent = 'Play';
+                }
+            }
+
+            playPrevious() {
+                this.playSong(this.currentSongIndex - 1);
+            }
+
+            playNext() {
+                this.playSong(this.currentSongIndex + 1);
+            }
+
+            handleSeek() {
+                const time = (this.seekSlider.value / 100) * this.audioPlayer.duration;
+                this.audioPlayer.currentTime = time;
+            }
+
+            updateTimeInfo() {
+                const currentTime = this.formatTime(this.audioPlayer.currentTime);
+                const duration = this.formatTime(this.audioPlayer.duration);
+                this.currentTimeSpan.textContent = currentTime;
+                this.durationSpan.textContent = duration;
+                
+                if (!this.seekSlider.dragging) {
+                    this.seekSlider.value = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100;
+                }
+            }
+
+            formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = Math.floor(seconds % 60);
+                return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }
+
+            handleSearch() {
+                const searchTerm = this.searchInput.value.toLowerCase();
+                const listItems = this.playlist.getElementsByTagName('li');
+                
+                Array.from(listItems).forEach(item => {
+                    const songName = item.textContent.toLowerCase();
+                    item.style.display = songName.includes(searchTerm) ? '' : 'none';
+                });
+            }
+
+            async savePlaylist() {
+                try {
+                    const handle = await window.showDirectoryPicker();
+                    const playlistFile = await handle.getFileHandle('playlist.json', { create: true });
+                    const writable = await playlistFile.createWritable();
+                    
+                    const playlistData = this.songs.map(song => ({
+                        name: song.name,
+                        type: song.type,
+                        size: song.size
+                    }));
+                    
+                    await writable.write(JSON.stringify(playlistData));
+                    await writable.close();
+                } catch (error) {
+                    console.error('Error saving playlist:', error);
+                }
+            }
+
+            async loadPlaylist() {
+                try {
+                    const handle = await window.showDirectoryPicker();
+                    const playlistFile = await handle.getFileHandle('playlist.json');
+                    const file = await playlistFile.getFile();
+                    const content = await file.text();
+                    const playlistData = JSON.parse(content);
+                    
+                    // Here you would typically load the actual audio files
+                    console.log('Playlist loaded:', playlistData);
+                } catch (error) {
+                    console.error('Error loading playlist:', error);
+                }
+            }
+        }
+
+        // Initialize the app
+        const app = new AudioPlayerApp();
+    </script>
+</body>
+</html>
