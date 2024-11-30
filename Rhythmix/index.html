@@ -10,16 +10,24 @@
 <body>
     <div id="player-container">
         <input type="file" id="file-input" multiple accept="audio/*">
-        <button id="save-playlist">Save Playlist</button>
-        <button id="load-playlist">Load Playlist</button>
         
         <div id="search-container">
             <input type="text" id="search-input" placeholder="Search songs...">
         </div>
 
-        <div id="playlist-container">
-            <h3>Playlist</h3>
-            <ul id="playlist"></ul>
+        <div id="library-container">
+            <h3>Library</h3>
+            <ul id="library"></ul>
+        </div>
+
+        <div id="playlist-management">
+            <h3>Playlists</h3>
+            <input type="text" id="new-playlist-name" placeholder="New playlist name">
+            <button id="create-playlist">Create Playlist</button>
+            <select id="playlist-select">
+                <option value="">Select Playlist</option>
+            </select>
+            <ul id="current-playlist"></ul>
         </div>
 
         <div id="controls">
@@ -37,18 +45,11 @@
     </div>
 
     <script>
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(error => {
-                console.error('Service Worker registration failed:', error);
-            });
-        }
-
-        // Main app logic
         class AudioPlayerApp {
             constructor() {
                 this.audioPlayer = document.getElementById('audio-player');
-                this.playlist = document.getElementById('playlist');
+                this.library = document.getElementById('library');
+                this.currentPlaylist = document.getElementById('current-playlist');
                 this.playPauseBtn = document.getElementById('play-pause');
                 this.prevBtn = document.getElementById('prev');
                 this.nextBtn = document.getElementById('next');
@@ -57,17 +58,36 @@
                 this.searchInput = document.getElementById('search-input');
                 this.currentTimeSpan = document.getElementById('current-time');
                 this.durationSpan = document.getElementById('duration');
+                this.playlistSelect = document.getElementById('playlist-select');
                 
-                this.songs = [];
+                this.library = [];
+                this.playlists = {};
                 this.currentSongIndex = 0;
+                this.activePlaylist = null;
 
                 this.initializeEventListeners();
+                this.loadSavedData();
             }
 
             initializeEventListeners() {
                 // File input handling
                 document.getElementById('file-input').addEventListener('change', (e) => {
                     this.handleFileSelect(e);
+                });
+
+                // Playlist management
+                document.getElementById('create-playlist').addEventListener('click', () => {
+                    const name = document.getElementById('new-playlist-name').value.trim();
+                    if (name) {
+                        this.createPlaylist(name);
+                        document.getElementById('new-playlist-name').value = '';
+                    }
+                });
+
+                this.playlistSelect.addEventListener('change', () => {
+                    const selected = this.playlistSelect.value;
+                    this.activePlaylist = selected;
+                    this.updateCurrentPlaylist();
                 });
 
                 // Playback controls
@@ -87,43 +107,142 @@
 
                 // Search functionality
                 this.searchInput.addEventListener('input', () => this.handleSearch());
-
-                // Save/Load playlist
-                document.getElementById('save-playlist').addEventListener('click', () => this.savePlaylist());
-                document.getElementById('load-playlist').addEventListener('click', () => this.loadPlaylist());
             }
 
-            async handleFileSelect(event) {
-                const files = Array.from(event.target.files);
-                this.songs = this.songs.concat(files);
-                this.updatePlaylist();
-                if (this.songs.length === files.length) {
-                    this.playSong(0);
+            async loadSavedData() {
+                try {
+                    const data = localStorage.getItem('audioPlayerData');
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        this.playlists = parsed.playlists || {};
+                        this.updatePlaylistSelect();
+                    }
+                } catch (error) {
+                    console.error('Error loading saved data:', error);
                 }
             }
 
-            updatePlaylist() {
-                this.playlist.innerHTML = '';
-                this.songs.forEach((song, index) => {
-                    const li = document.createElement('li');
-                    li.textContent = song.name;
-                    li.addEventListener('click', () => this.playSong(index));
-                    if (index === this.currentSongIndex) {
-                        li.style.fontWeight = 'bold';
-                    }
-                    this.playlist.appendChild(li);
+            async saveData() {
+                try {
+                    const data = {
+                        playlists: this.playlists
+                    };
+                    localStorage.setItem('audioPlayerData', JSON.stringify(data));
+                } catch (error) {
+                    console.error('Error saving data:', error);
+                }
+            }
+
+            handleFileSelect(event) {
+                const files = Array.from(event.target.files);
+                this.library = this.library.concat(files);
+                this.updateLibrary();
+            }
+
+            createPlaylist(name) {
+                if (!this.playlists[name]) {
+                    this.playlists[name] = [];
+                    this.updatePlaylistSelect();
+                    this.saveData();
+                }
+            }
+
+            updatePlaylistSelect() {
+                this.playlistSelect.innerHTML = '<option value="">Select Playlist</option>';
+                Object.keys(this.playlists).forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    this.playlistSelect.appendChild(option);
                 });
             }
 
+            updateLibrary() {
+                const libraryEl = document.getElementById('library');
+                libraryEl.innerHTML = '';
+                
+                this.library.forEach((song, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = song.name;
+                    
+                    // Add to playlist button
+                    if (this.activePlaylist) {
+                        const addBtn = document.createElement('button');
+                        addBtn.textContent = 'Add to Playlist';
+                        addBtn.onclick = () => this.addToPlaylist(index);
+                        li.appendChild(addBtn);
+                    }
+
+                    // Play button
+                    const playBtn = document.createElement('button');
+                    playBtn.textContent = 'Play';
+                    playBtn.onclick = () => this.playSong(index);
+                    li.appendChild(playBtn);
+
+                    libraryEl.appendChild(li);
+                });
+            }
+
+            updateCurrentPlaylist() {
+                this.currentPlaylist.innerHTML = '';
+                if (!this.activePlaylist) return;
+
+                const playlist = this.playlists[this.activePlaylist];
+                playlist.forEach((songIndex, index) => {
+                    const song = this.library[songIndex];
+                    if (!song) return;
+
+                    const li = document.createElement('li');
+                    li.textContent = song.name;
+                    
+                    // Remove button
+                    const removeBtn = document.createElement('button');
+                    removeBtn.textContent = 'Remove';
+                    removeBtn.onclick = () => this.removeFromPlaylist(index);
+                    li.appendChild(removeBtn);
+
+                    // Play button
+                    const playBtn = document.createElement('button');
+                    playBtn.textContent = 'Play';
+                    playBtn.onclick = () => this.playFromPlaylist(index);
+                    li.appendChild(playBtn);
+
+                    this.currentPlaylist.appendChild(li);
+                });
+                this.updateLibrary();
+            }
+
+            addToPlaylist(songIndex) {
+                if (this.activePlaylist && this.playlists[this.activePlaylist]) {
+                    this.playlists[this.activePlaylist].push(songIndex);
+                    this.saveData();
+                    this.updateCurrentPlaylist();
+                }
+            }
+
+            removeFromPlaylist(index) {
+                if (this.activePlaylist && this.playlists[this.activePlaylist]) {
+                    this.playlists[this.activePlaylist].splice(index, 1);
+                    this.saveData();
+                    this.updateCurrentPlaylist();
+                }
+            }
+
             playSong(index) {
-                if (index >= 0 && index < this.songs.length) {
+                if (index >= 0 && index < this.library.length) {
                     this.currentSongIndex = index;
-                    const song = this.songs[index];
+                    const song = this.library[index];
                     const url = URL.createObjectURL(song);
                     this.audioPlayer.src = url;
                     this.audioPlayer.play();
                     this.playPauseBtn.textContent = 'Pause';
-                    this.updatePlaylist();
+                }
+            }
+
+            playFromPlaylist(index) {
+                if (this.activePlaylist && this.playlists[this.activePlaylist]) {
+                    const songIndex = this.playlists[this.activePlaylist][index];
+                    this.playSong(songIndex);
                 }
             }
 
@@ -138,11 +257,27 @@
             }
 
             playPrevious() {
-                this.playSong(this.currentSongIndex - 1);
+                if (this.activePlaylist) {
+                    const playlist = this.playlists[this.activePlaylist];
+                    const currentIndex = playlist.indexOf(this.currentSongIndex);
+                    if (currentIndex > 0) {
+                        this.playFromPlaylist(currentIndex - 1);
+                    }
+                } else {
+                    this.playSong(this.currentSongIndex - 1);
+                }
             }
 
             playNext() {
-                this.playSong(this.currentSongIndex + 1);
+                if (this.activePlaylist) {
+                    const playlist = this.playlists[this.activePlaylist];
+                    const currentIndex = playlist.indexOf(this.currentSongIndex);
+                    if (currentIndex < playlist.length - 1) {
+                        this.playFromPlaylist(currentIndex + 1);
+                    }
+                } else {
+                    this.playSong(this.currentSongIndex + 1);
+                }
             }
 
             handleSeek() {
@@ -169,46 +304,12 @@
 
             handleSearch() {
                 const searchTerm = this.searchInput.value.toLowerCase();
-                const listItems = this.playlist.getElementsByTagName('li');
+                const listItems = document.getElementById('library').getElementsByTagName('li');
                 
                 Array.from(listItems).forEach(item => {
                     const songName = item.textContent.toLowerCase();
                     item.style.display = songName.includes(searchTerm) ? '' : 'none';
                 });
-            }
-
-            async savePlaylist() {
-                try {
-                    const handle = await window.showDirectoryPicker();
-                    const playlistFile = await handle.getFileHandle('playlist.json', { create: true });
-                    const writable = await playlistFile.createWritable();
-                    
-                    const playlistData = this.songs.map(song => ({
-                        name: song.name,
-                        type: song.type,
-                        size: song.size
-                    }));
-                    
-                    await writable.write(JSON.stringify(playlistData));
-                    await writable.close();
-                } catch (error) {
-                    console.error('Error saving playlist:', error);
-                }
-            }
-
-            async loadPlaylist() {
-                try {
-                    const handle = await window.showDirectoryPicker();
-                    const playlistFile = await handle.getFileHandle('playlist.json');
-                    const file = await playlistFile.getFile();
-                    const content = await file.text();
-                    const playlistData = JSON.parse(content);
-                    
-                    // Here you would typically load the actual audio files
-                    console.log('Playlist loaded:', playlistData);
-                } catch (error) {
-                    console.error('Error loading playlist:', error);
-                }
             }
         }
 
