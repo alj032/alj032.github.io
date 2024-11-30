@@ -9,7 +9,14 @@
 </head>
 <body>
     <div id="player-container">
-        <input type="file" id="file-input" multiple accept="audio/*">
+        <div id="setup-container">
+            <button id="setup-storage">Setup Storage Directory</button>
+        </div>
+
+        <div id="file-management">
+            <input type="file" id="file-input" multiple accept="audio/*">
+            <button id="import-songs">Import Songs to Library</button>
+        </div>
         
         <div id="search-container">
             <input type="text" id="search-input" placeholder="Search songs...">
@@ -45,8 +52,102 @@
     </div>
 
     <script>
+        class FileSystemManager {
+            constructor() {
+                this.rootHandle = null;
+                this.songsHandle = null;
+                this.playlistsHandle = null;
+            }
+
+            async setupFileSystem() {
+                try {
+                    // Request permission for the root directory
+                    this.rootHandle = await window.showDirectoryPicker({
+                        mode: 'readwrite',
+                        startIn: 'music'
+                    });
+
+                    // Create or get songs directory
+                    this.songsHandle = await this.rootHandle.getDirectoryHandle('songs', { create: true });
+                    
+                    // Create or get playlists directory
+                    this.playlistsHandle = await this.rootHandle.getDirectoryHandle('playlists', { create: true });
+
+                    return true;
+                } catch (error) {
+                    console.error('Error setting up file system:', error);
+                    return false;
+                }
+            }
+
+            async saveSong(file) {
+                try {
+                    const newHandle = await this.songsHandle.getFileHandle(file.name, { create: true });
+                    const writable = await newHandle.createWritable();
+                    await writable.write(file);
+                    await writable.close();
+                    return true;
+                } catch (error) {
+                    console.error('Error saving song:', error);
+                    return false;
+                }
+            }
+
+            async savePlaylist(name, songList) {
+                try {
+                    const playlistHandle = await this.playlistsHandle.getFileHandle(`${name}.json`, { create: true });
+                    const writable = await playlistHandle.createWritable();
+                    await writable.write(JSON.stringify(songList));
+                    await writable.close();
+                    return true;
+                } catch (error) {
+                    console.error('Error saving playlist:', error);
+                    return false;
+                }
+            }
+
+            async loadSongs() {
+                const songs = [];
+                for await (const entry of this.songsHandle.values()) {
+                    if (entry.kind === 'file') {
+                        const file = await entry.getFile();
+                        songs.push({
+                            name: entry.name,
+                            handle: entry,
+                            file: file
+                        });
+                    }
+                }
+                return songs;
+            }
+
+            async loadPlaylists() {
+                const playlists = {};
+                for await (const entry of this.playlistsHandle.values()) {
+                    if (entry.kind === 'file' && entry.name.endsWith('.json')) {
+                        const file = await entry.getFile();
+                        const content = await file.text();
+                        const playlistName = entry.name.replace('.json', '');
+                        playlists[playlistName] = JSON.parse(content);
+                    }
+                }
+                return playlists;
+            }
+
+            async getSongFile(songName) {
+                try {
+                    const handle = await this.songsHandle.getFileHandle(songName);
+                    return await handle.getFile();
+                } catch (error) {
+                    console.error('Error getting song file:', error);
+                    return null;
+                }
+            }
+        }
+
         class AudioPlayerApp {
             constructor() {
+                this.fsManager = new FileSystemManager();
                 this.audioPlayer = document.getElementById('audio-player');
                 this.library = document.getElementById('library');
                 this.currentPlaylist = document.getElementById('current-playlist');
@@ -60,26 +161,35 @@
                 this.durationSpan = document.getElementById('duration');
                 this.playlistSelect = document.getElementById('playlist-select');
                 
-                this.library = [];
+                this.songs = [];
                 this.playlists = {};
                 this.currentSongIndex = 0;
                 this.activePlaylist = null;
 
                 this.initializeEventListeners();
-                this.loadSavedData();
             }
 
-            initializeEventListeners() {
-                // File input handling
-                document.getElementById('file-input').addEventListener('change', (e) => {
-                    this.handleFileSelect(e);
+            async initializeEventListeners() {
+                // Setup storage
+                document.getElementById('setup-storage').addEventListener('click', async () => {
+                    if (await this.fsManager.setupFileSystem()) {
+                        await this.loadLibraryAndPlaylists();
+                    }
+                });
+
+                // Import songs
+                document.getElementById('import-songs').addEventListener('click', async () => {
+                    const fileInput = document.getElementById('file-input');
+                    if (fileInput.files.length > 0) {
+                        await this.importSongs(fileInput.files);
+                    }
                 });
 
                 // Playlist management
-                document.getElementById('create-playlist').addEventListener('click', () => {
+                document.getElementById('create-playlist').addEventListener('click', async () => {
                     const name = document.getElementById('new-playlist-name').value.trim();
                     if (name) {
-                        this.createPlaylist(name);
+                        await this.createPlaylist(name);
                         document.getElementById('new-playlist-name').value = '';
                     }
                 });
@@ -90,60 +200,38 @@
                     this.updateCurrentPlaylist();
                 });
 
-                // Playback controls
+                // Player controls
                 this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
                 this.prevBtn.addEventListener('click', () => this.playPrevious());
                 this.nextBtn.addEventListener('click', () => this.playNext());
-                
-                // Audio player events
                 this.audioPlayer.addEventListener('timeupdate', () => this.updateTimeInfo());
                 this.audioPlayer.addEventListener('ended', () => this.playNext());
-                
-                // Seek and volume controls
                 this.seekSlider.addEventListener('input', () => this.handleSeek());
                 this.volumeSlider.addEventListener('input', () => {
                     this.audioPlayer.volume = this.volumeSlider.value / 100;
                 });
-
-                // Search functionality
                 this.searchInput.addEventListener('input', () => this.handleSearch());
             }
 
-            async loadSavedData() {
-                try {
-                    const data = localStorage.getItem('audioPlayerData');
-                    if (data) {
-                        const parsed = JSON.parse(data);
-                        this.playlists = parsed.playlists || {};
-                        this.updatePlaylistSelect();
-                    }
-                } catch (error) {
-                    console.error('Error loading saved data:', error);
-                }
-            }
-
-            async saveData() {
-                try {
-                    const data = {
-                        playlists: this.playlists
-                    };
-                    localStorage.setItem('audioPlayerData', JSON.stringify(data));
-                } catch (error) {
-                    console.error('Error saving data:', error);
-                }
-            }
-
-            handleFileSelect(event) {
-                const files = Array.from(event.target.files);
-                this.library = this.library.concat(files);
+            async loadLibraryAndPlaylists() {
+                this.songs = await this.fsManager.loadSongs();
+                this.playlists = await this.fsManager.loadPlaylists();
                 this.updateLibrary();
+                this.updatePlaylistSelect();
             }
 
-            createPlaylist(name) {
+            async importSongs(files) {
+                for (const file of files) {
+                    await this.fsManager.saveSong(file);
+                }
+                await this.loadLibraryAndPlaylists();
+            }
+
+            async createPlaylist(name) {
                 if (!this.playlists[name]) {
                     this.playlists[name] = [];
+                    await this.fsManager.savePlaylist(name, []);
                     this.updatePlaylistSelect();
-                    this.saveData();
                 }
             }
 
@@ -158,91 +246,77 @@
             }
 
             updateLibrary() {
-                const libraryEl = document.getElementById('library');
-                libraryEl.innerHTML = '';
-                
-                this.library.forEach((song, index) => {
+                this.library.innerHTML = '';
+                this.songs.forEach((song, index) => {
                     const li = document.createElement('li');
                     li.textContent = song.name;
                     
-                    // Add to playlist button
                     if (this.activePlaylist) {
                         const addBtn = document.createElement('button');
                         addBtn.textContent = 'Add to Playlist';
-                        addBtn.onclick = () => this.addToPlaylist(index);
+                        addBtn.onclick = () => this.addToPlaylist(song.name);
                         li.appendChild(addBtn);
                     }
 
-                    // Play button
                     const playBtn = document.createElement('button');
                     playBtn.textContent = 'Play';
-                    playBtn.onclick = () => this.playSong(index);
+                    playBtn.onclick = () => this.playSong(song.name);
                     li.appendChild(playBtn);
 
-                    libraryEl.appendChild(li);
+                    this.library.appendChild(li);
                 });
             }
 
-            updateCurrentPlaylist() {
+            async updateCurrentPlaylist() {
                 this.currentPlaylist.innerHTML = '';
                 if (!this.activePlaylist) return;
 
                 const playlist = this.playlists[this.activePlaylist];
-                playlist.forEach((songIndex, index) => {
-                    const song = this.library[songIndex];
-                    if (!song) return;
-
+                for (const songName of playlist) {
                     const li = document.createElement('li');
-                    li.textContent = song.name;
+                    li.textContent = songName;
                     
-                    // Remove button
                     const removeBtn = document.createElement('button');
                     removeBtn.textContent = 'Remove';
-                    removeBtn.onclick = () => this.removeFromPlaylist(index);
+                    removeBtn.onclick = () => this.removeFromPlaylist(songName);
                     li.appendChild(removeBtn);
 
-                    // Play button
                     const playBtn = document.createElement('button');
                     playBtn.textContent = 'Play';
-                    playBtn.onclick = () => this.playFromPlaylist(index);
+                    playBtn.onclick = () => this.playSong(songName);
                     li.appendChild(playBtn);
 
                     this.currentPlaylist.appendChild(li);
-                });
+                }
                 this.updateLibrary();
             }
 
-            addToPlaylist(songIndex) {
-                if (this.activePlaylist && this.playlists[this.activePlaylist]) {
-                    this.playlists[this.activePlaylist].push(songIndex);
-                    this.saveData();
+            async addToPlaylist(songName) {
+                if (this.activePlaylist) {
+                    this.playlists[this.activePlaylist].push(songName);
+                    await this.fsManager.savePlaylist(this.activePlaylist, this.playlists[this.activePlaylist]);
                     this.updateCurrentPlaylist();
                 }
             }
 
-            removeFromPlaylist(index) {
-                if (this.activePlaylist && this.playlists[this.activePlaylist]) {
-                    this.playlists[this.activePlaylist].splice(index, 1);
-                    this.saveData();
-                    this.updateCurrentPlaylist();
+            async removeFromPlaylist(songName) {
+                if (this.activePlaylist) {
+                    const index = this.playlists[this.activePlaylist].indexOf(songName);
+                    if (index > -1) {
+                        this.playlists[this.activePlaylist].splice(index, 1);
+                        await this.fsManager.savePlaylist(this.activePlaylist, this.playlists[this.activePlaylist]);
+                        this.updateCurrentPlaylist();
+                    }
                 }
             }
 
-            playSong(index) {
-                if (index >= 0 && index < this.library.length) {
-                    this.currentSongIndex = index;
-                    const song = this.library[index];
-                    const url = URL.createObjectURL(song);
+            async playSong(songName) {
+                const songFile = await this.fsManager.getSongFile(songName);
+                if (songFile) {
+                    const url = URL.createObjectURL(songFile);
                     this.audioPlayer.src = url;
                     this.audioPlayer.play();
                     this.playPauseBtn.textContent = 'Pause';
-                }
-            }
-
-            playFromPlaylist(index) {
-                if (this.activePlaylist && this.playlists[this.activePlaylist]) {
-                    const songIndex = this.playlists[this.activePlaylist][index];
-                    this.playSong(songIndex);
                 }
             }
 
@@ -256,27 +330,27 @@
                 }
             }
 
-            playPrevious() {
+            async playPrevious() {
                 if (this.activePlaylist) {
                     const playlist = this.playlists[this.activePlaylist];
-                    const currentIndex = playlist.indexOf(this.currentSongIndex);
+                    const currentSong = this.audioPlayer.src;
+                    const currentIndex = playlist.findIndex(song => 
+                        currentSong.includes(encodeURIComponent(song)));
                     if (currentIndex > 0) {
-                        this.playFromPlaylist(currentIndex - 1);
+                        await this.playSong(playlist[currentIndex - 1]);
                     }
-                } else {
-                    this.playSong(this.currentSongIndex - 1);
                 }
             }
 
-            playNext() {
+            async playNext() {
                 if (this.activePlaylist) {
                     const playlist = this.playlists[this.activePlaylist];
-                    const currentIndex = playlist.indexOf(this.currentSongIndex);
+                    const currentSong = this.audioPlayer.src;
+                    const currentIndex = playlist.findIndex(song => 
+                        currentSong.includes(encodeURIComponent(song)));
                     if (currentIndex < playlist.length - 1) {
-                        this.playFromPlaylist(currentIndex + 1);
+                        await this.playSong(playlist[currentIndex + 1]);
                     }
-                } else {
-                    this.playSong(this.currentSongIndex + 1);
                 }
             }
 
@@ -304,7 +378,7 @@
 
             handleSearch() {
                 const searchTerm = this.searchInput.value.toLowerCase();
-                const listItems = document.getElementById('library').getElementsByTagName('li');
+                const listItems = this.library.getElementsByTagName('li');
                 
                 Array.from(listItems).forEach(item => {
                     const songName = item.textContent.toLowerCase();
