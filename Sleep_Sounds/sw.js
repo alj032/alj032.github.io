@@ -1,5 +1,5 @@
 // Increment this version number whenever you update your files
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `sleep-sounds-${CACHE_VERSION}`;
 
 const urlsToCache = [
