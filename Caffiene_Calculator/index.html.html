@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Impact Calculator</title>
+    <meta name="description" content="Calculate the impact of your coffee consumption on caffeine levels, water usage, and deforestation">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+    
+        #main {
+            margin-left: 120px;
+            padding: 20px;
+            max-width: 1400px;
+            margin-right: auto;
+            transition: margin-left 0.3s;
+        }
+    
+        /* Typography */
+        .page-title {
+            text-align: center;
+            color: #ffffff;
+            font-size: 2.8rem;
+            margin: 2rem 0;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+    
+        h2 {
+            color: #ffffff;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+    
+        label {
+            color: #ffffff;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 8px;
+        }
+    
+        /* Grid Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+    
+        /* Cards */
+        .card {
+            background: #2d2d2d;
+            border: 1px solid #3d3d3d;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+    
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+    
+        /* Input Section */
+        .input-section {
+            position: sticky;
+            top: 20px;
+        }
+    
+        /* Form Elements */
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 20px;
+            background: #333;
+            color: #ffffff;
+            border: 2px solid #444;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+    
+        input:focus {
+            border-color: #4CAF50;
+            background: #3a3a3a;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+    
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+    
+        button[type="submit"]:hover {
+            background: #45a049;
+        }
+    
+        /* Coffee Cup Selector */
+        #coffeeCups {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+    
+        .coffee-cup {
+            width: 60px;
+            height: 60px;
+            filter: invert(1) brightness(0.8);
+            opacity: 0.5;
+            transition: all 0.3s ease;
+            padding: 5px;
+            cursor: pointer;
+        }
+    
+        .coffee-cup.active {
+            filter: invert(1);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+    
+        /* Results Display */
+        #result, #waterResult, #deforestationResult {
+            background: #333;
+            color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    
+        /* Graph Container Styles */
+        #caffeineGraph {
+            background: #222;
+            border-radius: 8px;
+            padding: 20px;
+            height: 500px !important; /* Increased fixed height */
+            width: 100% !important;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Graph Result Text */
+        #result {
+            background: #333;
+            color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    
+        /* Water Visualization */
+        #waterVisualization {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 200px;
+            margin-top: 20px;
+        }
+    
+        .water-bar {
+            width: 100px;
+            background: linear-gradient(to top, #2196F3, #64B5F6);
+            border-radius: 8px 8px 0 0;
+            padding: 10px;
+            color: #ffffff;
+            font-weight: 600;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            min-height: 40px;
+            margin: 0 10px;
+            transition: height 0.3s ease;
+        }
+    
+        .water-label {
+            color: #ffffff;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: 500;
+        }
+    
+        /* Toggle Buttons */
+        .toggle-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+    
+        .toggle-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: #333;
+            color: #ffffff;
+            border: 1px solid #444;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+    
+        .toggle-btn:hover {
+            background: #3a3a3a;
+        }
+    
+        .toggle-btn.active {
+            background: #4CAF50;
+            border-color: #45a049;
+        }
+    
+        /* Map */
+        #map {
+            height: 400px;
+            border-radius: 8px;
+            margin-top: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            #main {
+                margin-left: 0;
+                padding: 15px;
+            }
+    
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+    
+            .input-section {
+                position: static;
+                order: -1;
+            }
+    
+            .page-title {
+                font-size: 2rem;
+            }
+    
+            .coffee-cup {
+                width: 50px;
+                height: 50px;
+            }
+    
+            #caffeineGraph {
+                height: 300px !important;
+            }
+    
+            .water-bar {
+                width: 80px;
+            }
+        }
+    
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+    
+            .card {
+                break-inside: avoid;
+                background: white;
+                border: 1px solid #ddd;
+            }
+    
+            #map {
+                break-inside: avoid;
+            }
+    
+            .input-section {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="w3-black">
+    <!-- Sidebar container -->
+    <div id="sidebarContainer"></div>
+
+    <!-- Main Content -->
+    <div id="main">
+        <h1 class="page-title">Coffee Impact Calculator</h1>
+        <div class="grid-container">
+            <div class="left-column">
+                <div class="card" id="caffeine">
+                    <h2>Caffeine Levels</h2>
+                    <div id="result"></div>
+                    <canvas id="caffeineGraph"></canvas>
+                </div>
+                
+                <div class="card" id="water">
+                    <h2>Water Consumption Impact</h2>
+                    <div class="toggle-container">
+                        <button class="toggle-btn active" id="annualWaterBtn">Annual Impact</button>
+                        <button class="toggle-btn" id="lifetimeWaterBtn">Lifetime Impact</button>
+                    </div>
+                    <div id="waterResult"></div>
+                    <div id="waterVisualization"></div>
+                </div>
+                
+                <div class="card" id="deforestation">
+                    <h2>Deforestation Impact</h2>
+                    <div class="toggle-container">
+                        <button class="toggle-btn active" id="annualDeforestationBtn">Annual Impact</button>
+                        <button class="toggle-btn" id="lifetimeDeforestationBtn">Lifetime Impact</button>
+                    </div>
+                    <div id="deforestationResult"></div>
+                    <div id="map"></div>
+                </div>
+            </div>
+            
+            <div class="card input-section" id="calc">
+                <h2>Calculate Your Impact</h2>
+                <div id="coffeeCups" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+                    <img src="/images/coffee-mug-vector-icon.jpg" alt="1 cup" class="coffee-cup" data-cups="1">
+                    <img src="/images/coffee-mug-vector-icon.jpg" alt="2 cups" class="coffee-cup" data-cups="2">
+                    <img src="/images/coffee-mug-vector-icon.jpg" alt="3 cups" class="coffee-cup" data-cups="3">
+                    <img src="/images/coffee-mug-vector-icon.jpg" alt="4 cups" class="coffee-cup" data-cups="4">
+                    <img src="/images/coffee-mug-vector-icon.jpg" alt="5 cups" class="coffee-cup" data-cups="5">
+                </div>
+                <form id="caffeineForm">
+                    <label for="caffeine">Caffeine Amount (mg)</label>
+                    <input type="number" id="caffeine" min="0" step="1" required>
+                    
+                    <label for="consumptionTime">Consumption Time</label>
+                    <input type="time" id="consumptionTime" required>
+                    
+                    <label for="bedtime">Planned Bedtime</label>
+                    <input type="time" id="bedtime" required>
+                    
+                    <button type="submit">Calculate Impact</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script src="/sidebar.js"></script>
+    <script>
+        // Initialize sidebar
+        const sidebar = new Sidebar({
+            containerId: 'sidebarContainer',
+            profileImage: '/images/init.jpg',
+            homeUrl: 'https://alj032.github.io/#',
+            menuItems: [
+                { id: 'caffeine', icon: 'fa-mug-hot', text: 'CAFFEINE', link: '#caffeine' },
+                { id: 'calculator', icon: 'fa-calculator', text: 'CALCULATOR', link: '#calc' },
+                { id: 'water', icon: 'fa-droplet', text: 'WATER', link: '#water' },
+                { id: 'deforestation', icon: 'fa-tree', text: 'DEFORESTATION', link: '#deforestation' }
+            ]
+        });
+
+	        let selectedCups = 0;
+        const coffeeCups = document.querySelectorAll('.coffee-cup');
+        const caffeineInput = document.getElementById('caffeine');
+        const consumptionTimeInput = document.getElementById('consumptionTime');
+        let isAnnualWater = true;
+        let isAnnualDeforestation = true;
+        
+        // Set current time for consumption time input
+        function setCurrentTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            consumptionTimeInput.value = `${hours}:${minutes}`;
+        }
+        
+        setCurrentTime();
+        
+        coffeeCups.forEach(cup => {
+            cup.addEventListener('click', () => {
+                selectedCups = parseInt(cup.dataset.cups);
+                updateCups();
+                caffeineInput.value = selectedCups * 100;
+            });
+        });
+
+        caffeineInput.addEventListener('input', () => {
+            const caffeineAmount = parseInt(caffeineInput.value);
+            selectedCups = Math.round(caffeineAmount / 100);
+            updateCups();
+        });
+
+        function updateCups() {
+            coffeeCups.forEach((cup, index) => {
+                if (index < selectedCups) {
+                    cup.classList.add('active');
+                } else {
+                    cup.classList.remove('active');
+                }
+            });
+        }
+
+        document.getElementById('caffeineForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            calculateCaffeine();
+        });
+
+        function calculateCaffeine() {
+            const caffeineAmount = parseFloat(document.getElementById('caffeine').value);
+            const consumptionTime = document.getElementById('consumptionTime').value;
+            const bedtime = document.getElementById('bedtime').value;
+
+            if (!caffeineAmount || !consumptionTime || !bedtime) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const consumptionDate = new Date();
+            const [consumptionHours, consumptionMinutes] = consumptionTime.split(':');
+            consumptionDate.setHours(parseInt(consumptionHours), parseInt(consumptionMinutes), 0, 0);
+
+            const bedtimeDate = new Date();
+            const [bedtimeHours, bedtimeMinutes] = bedtime.split(':');
+            bedtimeDate.setHours(parseInt(bedtimeHours), parseInt(bedtimeMinutes), 0, 0);
+
+            if (bedtimeDate < consumptionDate) {
+                bedtimeDate.setDate(bedtimeDate.getDate() + 1);
+            }
+
+            const timeDifference = (bedtimeDate - consumptionDate) / (1000 * 60 * 60); // Time difference in hours
+            const caffeineHalfLife = 5; // Caffeine half-life in hours
+
+            const remainingCaffeine = caffeineAmount * Math.pow(0.5, timeDifference / caffeineHalfLife);
+            const averageCupCaffeine = 100; // Average mg of caffeine in a cup of coffee
+            const cupsEquivalent = remainingCaffeine / averageCupCaffeine;
+
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML = `At your bedtime (${bedtime}), you will have approximately ${remainingCaffeine.toFixed(2)}mg of caffeine in your system. <br><br>This is equivalent to ${cupsEquivalent.toFixed(2)} cups of coffee in your system when you go to sleep.`;
+
+            drawGraph(caffeineAmount, consumptionDate, bedtimeDate);
+            calculateWaterConsumption(caffeineAmount / averageCupCaffeine);
+        }
+
+        function drawGraph(initialCaffeine, startTime, endTime) {
+            const canvas = document.getElementById('caffeineGraph');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size properly
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = {
+                left: 80,    // Increased left padding for y-axis labels
+                right: 60,
+                top: 40,
+                bottom: 60
+            };
+            
+            const graphWidth = width - padding.left - padding.right;
+            const graphHeight = height - padding.top - padding.bottom;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Set text styling
+            ctx.font = '14px Inter';
+            ctx.fillStyle = '#ffffff';
+            ctx.textBaseline = 'middle';
+
+            // Draw axes with better visibility
+            ctx.beginPath();
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1;
+            
+            // Y-axis
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, height - padding.bottom);
+            // X-axis
+            ctx.moveTo(padding.left, height - padding.bottom);
+            ctx.lineTo(width - padding.right, height - padding.bottom);
+            ctx.stroke();
+
+            // Draw caffeine level line
+            const caffeineHalfLife = 5;
+            const maxHours = 24;
+            const maxCaffeine = Math.ceil(initialCaffeine / 50) * 50;
+
+            // Y-axis labels (Caffeine levels)
+            ctx.textAlign = 'right';
+            for (let mg = 0; mg <= maxCaffeine; mg += 50) {
+                const y = height - padding.bottom - (mg / maxCaffeine) * graphHeight;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(`${mg}mg`, padding.left - 10, y);
+                
+                // Draw light grid lines
+                ctx.beginPath();
+                ctx.strokeStyle = '#444';
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+            }
+
+            // X-axis labels (Hours)
+            ctx.textAlign = 'center';
+            for (let hour = 0; hour <= maxHours; hour += 4) {
+                const x = padding.left + (hour / maxHours) * graphWidth;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(`${hour}h`, x, height - padding.bottom + 20);
+                
+                // Draw light grid lines
+                ctx.beginPath();
+                ctx.strokeStyle = '#444';
+                ctx.moveTo(x, padding.top);
+                ctx.lineTo(x, height - padding.bottom);
+                ctx.stroke();
+            }
+
+            // Draw caffeine decay curve
+            ctx.beginPath();
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 3;
+
+            for (let hour = 0; hour <= maxHours; hour += 0.5) {
+                const x = padding.left + (hour / maxHours) * graphWidth;
+                const caffeine = initialCaffeine * Math.pow(0.5, hour / caffeineHalfLife);
+                const y = height - padding.bottom - (caffeine / maxCaffeine) * graphHeight;
+                
+                if (hour === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+
+                // Add caffeine level labels at key points
+                if (hour % 4 === 0) {
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.fillText(`${caffeine.toFixed(1)}mg`, x, y - 15);
+                }
+            }
+            ctx.stroke();
+
+            // Add titles
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px Inter';
+            ctx.textAlign = 'center';
+            
+            // Main title
+            ctx.fillText('Caffeine Level Over Time', width / 2, padding.top / 2);
+            
+            // Y-axis title
+            ctx.save();
+            ctx.translate(padding.left / 3, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Caffeine (mg)', 0, 0);
+            ctx.restore();
+            
+            // X-axis title
+            ctx.fillText('Time (hours)', width / 2, height - padding.bottom / 3);
+        }
+
+        // Reset canvas size when window resizes
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('caffeineGraph');
+            if (canvas) {
+                // Redraw the graph with the current values
+                const form = document.getElementById('caffeineForm');
+                if (form) {
+                    form.dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+
+        function calculateWaterConsumption(cups) {
+            const waterPerCup = 37; // gallons of water per cup of coffee
+            const dailyWaterUsage = cups * waterPerCup;
+            const yearlyWaterUsage = dailyWaterUsage * 365;
+            const lifetimeWaterUsage = yearlyWaterUsage * 70; // Assuming 70 years lifespan
+
+            const waterResultElement = document.getElementById('waterResult');
+            if (isAnnualWater) {
+                waterResultElement.innerHTML = `Your coffee consumption uses approximately ${dailyWaterUsage.toFixed(2)} gallons of water per day.<br>
+                    Annually, it would use ${yearlyWaterUsage.toFixed(2)} gallons of water.`;
+                drawWaterVisualization(dailyWaterUsage, yearlyWaterUsage);
+            } else {
+                waterResultElement.innerHTML = `Over a 70-year lifespan, your coffee consumption would use approximately ${lifetimeWaterUsage.toFixed(2)} gallons of water.`;
+                drawWaterVisualization(yearlyWaterUsage, lifetimeWaterUsage);
+            }
+
+            calculateDeforestation(cups);
+        }
+
+        function drawWaterVisualization(value1, value2) {
+            const container = document.getElementById('waterVisualization');
+            container.innerHTML = '';
+
+            const maxHeight = 180; // max height of the bar in pixels
+            const maxWater = Math.max(value1, value2);
+
+            function createBar(amount, label) {
+                const bar = document.createElement('div');
+                bar.className = 'water-bar';
+                const height = (amount / maxWater) * maxHeight;
+                bar.style.height = `${height}px`;
+                bar.innerHTML = `${amount.toFixed(0)}<br>gallons`;
+
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'water-label';
+                labelDiv.textContent = label;
+
+                const wrapper = document.createElement('div');
+                wrapper.appendChild(bar);
+                wrapper.appendChild(labelDiv);
+
+                return wrapper;
+            }
+
+            if (isAnnualWater) {
+                container.appendChild(createBar(value1, 'Daily'));
+                container.appendChild(createBar(value2, 'Yearly'));
+            } else {
+                container.appendChild(createBar(value1, 'Yearly'));
+                container.appendChild(createBar(value2, 'Lifetime'));
+            }
+        }
+
+        function calculateDeforestation(cups) {
+            const deforestationPerCup = 1; // square inch per cup
+            const yearlyDeforestation = cups * deforestationPerCup * 365;
+            const lifetimeDeforestation = yearlyDeforestation * 70; // Assuming 70 years lifespan
+            const squareFeetYearly = yearlyDeforestation / 144; // Convert square inches to square feet
+            const squareFeetLifetime = lifetimeDeforestation / 144;
+
+            const deforestationResultElement = document.getElementById('deforestationResult');
+            if (isAnnualDeforestation) {
+                deforestationResultElement.innerHTML = `Your yearly coffee consumption could contribute to the deforestation of approximately ${squareFeetYearly.toFixed(2)} square feet of rainforest.`;
+                drawDeforestationVisualization(squareFeetYearly);
+            } else {
+                deforestationResultElement.innerHTML = `Over a 70-year lifespan, your coffee consumption could contribute to the deforestation of approximately ${squareFeetLifetime.toFixed(2)} square feet of rainforest.`;
+                drawDeforestationVisualization(squareFeetLifetime);
+            }
+        }
+
+        let map;
+        let deforestationLayer;
+
+        function drawDeforestationVisualization(squareFeet) {
+            if (!map) {
+                map = L.map('map').setView([-3.4653, -62.2159], 12); // Centered on the Amazon rainforest
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+            }
+
+            if (deforestationLayer) {
+                map.removeLayer(deforestationLayer);
+            }
+
+            const squareMeters = squareFeet * 0.092903; // Convert square feet to square meters
+            const sideLength = Math.sqrt(squareMeters);
+            const bounds = [
+                [-3.4653, -62.2159],
+                [-3.4653 + sideLength / 111000, -62.2159 + sideLength / (111000 * Math.cos(-3.4653 * Math.PI / 180))]
+            ];
+
+            deforestationLayer = L.rectangle(bounds, {color: "#8B4513", weight: 1, fillOpacity: 0.5}).addTo(map);
+            map.fitBounds(bounds);
+
+            deforestationLayer.bindPopup(`Deforested area: ${squareFeet.toFixed(2)} square feet`).openPopup();
+        }
+
+        // Toggle buttons for water consumption
+        document.getElementById('annualWaterBtn').addEventListener('click', function() {
+            if (!isAnnualWater) {
+                isAnnualWater = true;
+                this.classList.add('active');
+                document.getElementById('lifetimeWaterBtn').classList.remove('active');
+                calculateCaffeine();
+            }
+        });
+
+        document.getElementById('lifetimeWaterBtn').addEventListener('click', function() {
+            if (isAnnualWater) {
+                isAnnualWater = false;
+                this.classList.add('active');
+                document.getElementById('annualWaterBtn').classList.remove('active');
+                calculateCaffeine();
+            }
+        });
+
+        // Toggle buttons for deforestation
+        document.getElementById('annualDeforestationBtn').addEventListener('click', function() {
+            if (!isAnnualDeforestation) {
+                isAnnualDeforestation = true;
+                this.classList.add('active');
+                document.getElementById('lifetimeDeforestationBtn').classList.remove('active');
+                calculateCaffeine();
+            }
+        });
+
+        document.getElementById('lifetimeDeforestationBtn').addEventListener('click', function() {
+            if (isAnnualDeforestation) {
+                isAnnualDeforestation = false;
+                this.classList.add('active');
+                document.getElementById('annualDeforestationBtn').classList.remove('active');
+                calculateCaffeine();
+            }
+        });
+    </script>
+</body>
+</html>
