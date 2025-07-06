@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global News Archive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+        
+        .countries-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .country-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .country-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .country-link {
+            text-decoration: none;
+            color: #333;
+            display: block;
+        }
+        
+        .country-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .article-count {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .flag {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        
+        .stats {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            padding: 20px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 16px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Global News Archive</h1>
+            <p class="subtitle">Latest news from around the world</p>
+        </div>
+        
+        <div class="stats">
+            <h2>Archive Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">13</div>
+                    <div class="stat-label">Countries</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">226</div>
+                    <div class="stat-label">Total Articles</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{datetime.now().strftime('%b %d')}</div>
+                    <div class="stat-label">Last Updated</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="countries-grid">
+
+            <div class="country-card">
+                <a href="united_states/index.html" class="country-link">
+                    <div class="flag">🇺🇸</div>
+                    <div class="country-name">United States</div>
+                    <div class="article-count">10 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="united_kingdom/index.html" class="country-link">
+                    <div class="flag">🇬🇧</div>
+                    <div class="country-name">United Kingdom</div>
+                    <div class="article-count">20 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="canada/index.html" class="country-link">
+                    <div class="flag">🇨🇦</div>
+                    <div class="country-name">Canada</div>
+                    <div class="article-count">20 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="australia/index.html" class="country-link">
+                    <div class="flag">🇦🇺</div>
+                    <div class="country-name">Australia</div>
+                    <div class="article-count">20 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="india/index.html" class="country-link">
+                    <div class="flag">🇮🇳</div>
+                    <div class="country-name">India</div>
+                    <div class="article-count">20 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="germany/index.html" class="country-link">
+                    <div class="flag">🇩🇪</div>
+                    <div class="country-name">Germany</div>
+                    <div class="article-count">20 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="france/index.html" class="country-link">
+                    <div class="flag">🇫🇷</div>
+                    <div class="country-name">France</div>
+                    <div class="article-count">20 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="japan/index.html" class="country-link">
+                    <div class="flag">🇯🇵</div>
+                    <div class="country-name">Japan</div>
+                    <div class="article-count">10 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="russia/index.html" class="country-link">
+                    <div class="flag">🇷🇺</div>
+                    <div class="country-name">Russia</div>
+                    <div class="article-count">20 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="china/index.html" class="country-link">
+                    <div class="flag">🇨🇳</div>
+                    <div class="country-name">China</div>
+                    <div class="article-count">10 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="south_africa/index.html" class="country-link">
+                    <div class="flag">🇿🇦</div>
+                    <div class="country-name">South Africa</div>
+                    <div class="article-count">20 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="singapore/index.html" class="country-link">
+                    <div class="flag">🇸🇬</div>
+                    <div class="country-name">Singapore</div>
+                    <div class="article-count">16 articles</div>
+                </a>
+            </div>
+
+            <div class="country-card">
+                <a href="international/index.html" class="country-link">
+                    <div class="flag">🌐</div>
+                    <div class="country-name">International</div>
+                    <div class="article-count">20 articles</div>
+                </a>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
