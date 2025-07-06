@@ -245,34 +245,45 @@
 
         // Preload and decode all sound files
         function preloadSounds() {
+            console.log('🎵 Starting to preload sounds...');
+            console.log('Total sounds to load:', sounds.length);
             loadingCount = 0;
-            sounds.forEach(sound => {
+            
+            sounds.forEach((sound, index) => {
+                console.log(`📂 Loading sound ${index + 1}/${sounds.length}: ${sound.file}`);
+                
                 fetch(`sounds/${sound.file}`)
                     .then(response => {
+                        console.log(`📡 Fetch response for ${sound.file}:`, response.status);
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
                         return response.arrayBuffer();
                     })
                     .then(arrayBuffer => {
+                        console.log(`🔄 Decoding ${sound.file}...`);
                         return audioContext.decodeAudioData(arrayBuffer);
                     })
                     .then(audioBuffer => {
                         audioBuffers[sound.file] = audioBuffer;
                         loadingCount++;
+                        console.log(`✅ Loaded ${sound.file} (${loadingCount}/${sounds.length})`);
                         
                         // Check if all sounds are loaded
                         if (loadingCount === sounds.length) {
+                            console.log('🎉 All sounds loaded successfully!');
                             soundsLoaded = true;
                             updateSoundCardsState();
                         }
                     })
                     .catch(error => {
-                        console.error(`Error loading sound: ${sound.file}`, error);
+                        console.error(`❌ Error loading sound: ${sound.file}`, error);
                         loadingCount++;
+                        console.log(`⚠️ Failed to load ${sound.file}, but continuing (${loadingCount}/${sounds.length})`);
                         
                         // Still check if we're done (even with errors)
                         if (loadingCount === sounds.length) {
+                            console.log('⚠️ Finished loading (with some errors)');
                             soundsLoaded = true;
                             updateSoundCardsState();
                         }
@@ -282,13 +293,18 @@
 
         // Update visual state of sound cards based on loading status
         function updateSoundCardsState() {
+            console.log('🎛️ Updating sound cards state, soundsLoaded:', soundsLoaded);
             const cards = document.querySelectorAll('.sound-card');
-            cards.forEach(card => {
+            console.log('Found', cards.length, 'sound cards');
+            
+            cards.forEach((card, index) => {
                 if (soundsLoaded) {
+                    console.log(`✅ Enabling card ${index + 1}`);
                     card.style.opacity = '1';
                     card.style.cursor = 'pointer';
                     card.style.pointerEvents = 'auto';
                 } else {
+                    console.log(`⏳ Disabling card ${index + 1}`);
                     card.style.opacity = '0.5';
                     card.style.cursor = 'wait';
                     card.style.pointerEvents = 'none';
