@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,19 +90,6 @@
             height: 200px;
             display: block;
             cursor: crosshair;
-        }
-
-        #playhead {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 2px;
-            height: 100%;
-            background-color: #ff0000;
-            pointer-events: none;
-            display: none;
-            transform: translateX(-1px);
-            will-change: transform;
         }
 
         .loading-overlay {
@@ -289,7 +275,6 @@
             
             <div class="waveform-container">
                 <canvas id="waveform"></canvas>
-                <div id="playhead"></div>
                 <div class="loading-overlay" id="loadingOverlay" style="display: none;">
                     <div class="loading-spinner"></div>
                 </div>
@@ -341,10 +326,6 @@
                 this.gainNode = null;
                 this.isSelecting = false;
                 this.animationId = null;
-                this.timeUpdateInterval = null;
-                this.waveformCache = null;
-                this.playhead = document.getElementById('playhead');
-                this.lastPlayheadUpdate = 0;
                 
                 this.initializeElements();
                 this.setupEventListeners();
@@ -418,14 +399,10 @@
                 this.canvas.addEventListener('mouseup', (e) => this.endSelection(e));
                 
                 // Handle window resize
-                let resizeTimeout;
                 window.addEventListener('resize', () => {
-                    clearTimeout(resizeTimeout);
-                    resizeTimeout = setTimeout(() => {
-                        if (this.audioBuffer) {
-                            this.drawWaveform();
-                        }
-                    }, 100);
+                    if (this.audioBuffer) {
+                        this.drawWaveform();
+                    }
                 });
             }
             
@@ -448,7 +425,7 @@
                     this.duration = this.audioBuffer.duration;
                     
                     this.displayFileInfo(file);
-                    await this.drawWaveform();
+                    this.drawWaveform();
                     this.audioEditor.style.display = 'block';
                     this.enableControls();
                     
@@ -507,7 +484,7 @@
                 `;
             }
             
-            async drawWaveform() {
+            drawWaveform() {
                 const rect = this.canvas.getBoundingClientRect();
                 this.canvas.width = rect.width * window.devicePixelRatio;
                 this.canvas.height = rect.height * window.devicePixelRatio;
@@ -516,109 +493,81 @@
                 const width = rect.width;
                 const height = rect.height;
                 
-                // Create an offscreen canvas for the waveform
-                const offscreenCanvas = document.createElement('canvas');
-                offscreenCanvas.width = this.canvas.width;
-                offscreenCanvas.height = this.canvas.height;
-                const offscreenCtx = offscreenCanvas.getContext('2d');
-                offscreenCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
-                
-                // Clear the canvas
-                offscreenCtx.clearRect(0, 0, width, height);
+                this.ctx.clearRect(0, 0, width, height);
                 
                 // Create gradient background
-                const gradient = offscreenCtx.createLinearGradient(0, 0, 0, height);
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, height);
                 gradient.addColorStop(0, 'rgba(102, 126, 234, 0.1)');
                 gradient.addColorStop(1, 'rgba(118, 75, 162, 0.1)');
-                offscreenCtx.fillStyle = gradient;
-                offscreenCtx.fillRect(0, 0, width, height);
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, width, height);
                 
-                // Process waveform data
                 const channelData = this.audioBuffer.getChannelData(0);
                 const samplesPerPixel = Math.floor(channelData.length / width);
-                const waveformData = new Float32Array(width * 2);
                 
-                // Calculate min/max values for each pixel
+                this.ctx.strokeStyle = '#667eea';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                
                 for (let x = 0; x < width; x++) {
                     const start = x * samplesPerPixel;
-                    const end = Math.min(start + samplesPerPixel, channelData.length);
+                    const end = start + samplesPerPixel;
                     let min = 0, max = 0;
                     
-                    for (let i = start; i < end; i++) {
-                        const sample = channelData[i];
-                        if (sample < min) min = sample;
-                        if (sample > max) max = sample;
+                    for (let i = start; i < end && i < channelData.length; i++) {
+                        if (channelData[i] < min) min = channelData[i];
+                        if (channelData[i] > max) max = channelData[i];
                     }
-                    
-                    waveformData[x * 2] = min;
-                    waveformData[x * 2 + 1] = max;
-                }
-                
-                // Draw waveform
-                offscreenCtx.strokeStyle = '#667eea';
-                offscreenCtx.lineWidth = 1;
-                offscreenCtx.beginPath();
-                
-                for (let x = 0; x < width; x++) {
-                    const min = waveformData[x * 2];
-                    const max = waveformData[x * 2 + 1];
                     
                     const yMin = (1 + min) * height / 2;
                     const yMax = (1 + max) * height / 2;
                     
-                    offscreenCtx.moveTo(x, yMin);
-                    offscreenCtx.lineTo(x, yMax);
+                    this.ctx.moveTo(x, yMin);
+                    this.ctx.lineTo(x, yMax);
                 }
                 
-                offscreenCtx.stroke();
-                
-                // Cache the waveform
-                this.waveformCache = offscreenCanvas;
-                
-                // Draw to main canvas
-                this.ctx.clearRect(0, 0, width, height);
-                this.ctx.drawImage(offscreenCanvas, 0, 0);
+                this.ctx.stroke();
                 
                 // Draw selection if exists
                 if (this.hasSelection) {
                     this.drawSelection();
                 }
+                
+                // Draw playhead if playing
+                if (this.isPlaying) {
+                    this.drawPlayhead();
+                }
             }
             
             drawSelection() {
                 const width = this.canvas.getBoundingClientRect().width;
-                const height = this.canvas.getBoundingClientRect().height;
                 const startX = (this.selectionStart / this.duration) * width;
                 const endX = (this.selectionEnd / this.duration) * width;
                 
                 this.ctx.fillStyle = 'rgba(118, 75, 162, 0.3)';
-                this.ctx.fillRect(startX, 0, endX - startX, height);
+                this.ctx.fillRect(startX, 0, endX - startX, this.canvas.getBoundingClientRect().height);
                 
                 // Draw selection borders
                 this.ctx.strokeStyle = '#764ba2';
                 this.ctx.lineWidth = 2;
                 this.ctx.beginPath();
                 this.ctx.moveTo(startX, 0);
-                this.ctx.lineTo(startX, height);
+                this.ctx.lineTo(startX, this.canvas.getBoundingClientRect().height);
                 this.ctx.moveTo(endX, 0);
-                this.ctx.lineTo(endX, height);
+                this.ctx.lineTo(endX, this.canvas.getBoundingClientRect().height);
                 this.ctx.stroke();
             }
             
-            redrawWithSelection() {
-                const width = this.canvas.getBoundingClientRect().width;
-                const height = this.canvas.getBoundingClientRect().height;
+            drawPlayhead() {
+                const currentTime = this.pauseTime || (this.audioContext.currentTime - this.startTime);
+                const x = (currentTime / this.duration) * this.canvas.getBoundingClientRect().width;
                 
-                // Redraw cached waveform
-                this.ctx.clearRect(0, 0, width, height);
-                if (this.waveformCache) {
-                    this.ctx.drawImage(this.waveformCache, 0, 0);
-                }
-                
-                // Draw selection if exists
-                if (this.hasSelection) {
-                    this.drawSelection();
-                }
+                this.ctx.strokeStyle = '#ff0000';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, 0);
+                this.ctx.lineTo(x, this.canvas.getBoundingClientRect().height);
+                this.ctx.stroke();
             }
             
             startSelection(event) {
@@ -641,7 +590,7 @@
                 this.selectionEnd = time;
                 this.hasSelection = Math.abs(this.selectionEnd - this.selectionStart) > 0.1;
                 
-                this.redrawWithSelection();
+                this.drawWaveform();
                 this.updateSelectionInfo();
             }
             
@@ -697,7 +646,6 @@
                 this.pauseBtn.disabled = false;
                 this.stopBtn.disabled = false;
                 
-                this.playhead.style.display = 'block';
                 this.updateTimeDisplay();
                 this.animatePlayhead();
             }
@@ -714,10 +662,6 @@
                 
                 if (this.animationId) {
                     cancelAnimationFrame(this.animationId);
-                }
-                
-                if (this.timeUpdateInterval) {
-                    clearInterval(this.timeUpdateInterval);
                 }
             }
             
@@ -741,29 +685,13 @@
                     cancelAnimationFrame(this.animationId);
                 }
                 
-                if (this.timeUpdateInterval) {
-                    clearInterval(this.timeUpdateInterval);
-                }
-                
-                this.playhead.style.display = 'none';
+                this.drawWaveform();
                 this.updateTimeDisplay();
             }
             
             animatePlayhead() {
-                if (!this.isPlaying) return;
-                
-                const currentTime = this.audioContext.currentTime - this.startTime;
-                const progress = currentTime / this.duration;
-                
-                // Only update if enough time has passed (throttle to 60fps)
-                const now = performance.now();
-                if (now - this.lastPlayheadUpdate > 16) {
-                    const x = progress * this.canvas.getBoundingClientRect().width;
-                    this.playhead.style.transform = `translateX(${x - 1}px)`;
-                    this.lastPlayheadUpdate = now;
-                }
-                
-                if (currentTime < this.duration) {
+                if (this.isPlaying) {
+                    this.drawWaveform();
                     this.animationId = requestAnimationFrame(() => this.animatePlayhead());
                 }
             }
@@ -775,20 +703,15 @@
                     return `${mins}:${secs.toString().padStart(2, '0')}`;
                 };
                 
-                const updateTime = () => {
-                    if (this.isPlaying) {
-                        const currentTime = this.audioContext.currentTime - this.startTime;
-                        this.timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(this.duration)}`;
-                    } else {
-                        this.timeDisplay.textContent = `${formatTime(this.pauseTime)} / ${formatTime(this.duration)}`;
-                    }
-                };
-                
-                updateTime();
-                
                 if (this.isPlaying) {
-                    // Update time display less frequently (4 times per second)
-                    this.timeUpdateInterval = setInterval(updateTime, 250);
+                    const currentTime = this.audioContext.currentTime - this.startTime;
+                    this.timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(this.duration)}`;
+                    
+                    if (currentTime < this.duration) {
+                        requestAnimationFrame(() => this.updateTimeDisplay());
+                    }
+                } else {
+                    this.timeDisplay.textContent = `${formatTime(this.pauseTime)} / ${formatTime(this.duration)}`;
                 }
             }
             
