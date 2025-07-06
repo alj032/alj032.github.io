@@ -64,7 +64,7 @@
             padding: 20px;
             text-align: center;
             cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s, background 0.2s, opacity 0.3s;
             min-height: 120px;
             display: flex;
             flex-direction: column;
@@ -207,6 +207,8 @@
         let activeSound = null;
         let timerTimeout = null;
         let gainNode = null;
+        let soundsLoaded = false;
+        let loadingCount = 0;
 
         // Initialize audio context
         function initAudioContext() {
@@ -243,6 +245,7 @@
 
         // Preload and decode all sound files
         function preloadSounds() {
+            loadingCount = 0;
             sounds.forEach(sound => {
                 fetch(`sounds/${sound.file}`)
                     .then(response => {
@@ -256,10 +259,40 @@
                     })
                     .then(audioBuffer => {
                         audioBuffers[sound.file] = audioBuffer;
+                        loadingCount++;
+                        
+                        // Check if all sounds are loaded
+                        if (loadingCount === sounds.length) {
+                            soundsLoaded = true;
+                            updateSoundCardsState();
+                        }
                     })
                     .catch(error => {
                         console.error(`Error loading sound: ${sound.file}`, error);
+                        loadingCount++;
+                        
+                        // Still check if we're done (even with errors)
+                        if (loadingCount === sounds.length) {
+                            soundsLoaded = true;
+                            updateSoundCardsState();
+                        }
                     });
+            });
+        }
+
+        // Update visual state of sound cards based on loading status
+        function updateSoundCardsState() {
+            const cards = document.querySelectorAll('.sound-card');
+            cards.forEach(card => {
+                if (soundsLoaded) {
+                    card.style.opacity = '1';
+                    card.style.cursor = 'pointer';
+                    card.style.pointerEvents = 'auto';
+                } else {
+                    card.style.opacity = '0.5';
+                    card.style.cursor = 'wait';
+                    card.style.pointerEvents = 'none';
+                }
             });
         }
 
@@ -281,6 +314,7 @@
             // Check if the buffer is loaded
             const buffer = audioBuffers[soundFile];
             if (!buffer) {
+                console.log(`Sound not yet loaded: ${soundFile}`);
                 return null;
             }
 
@@ -309,32 +343,62 @@
           `;
 
             card.addEventListener('click', () => {
-                // Initialize audio context on first click
-                if (!audioContext) initAudioContext();
-
-                // Handle click behavior
-                if (activeSound && activeSound.file === sound.file) {
-                    // Stop the sound if it's already playing
-                    activeSound.source.stop();
-                    activeSound = null;
-                    card.classList.remove('playing');
-                    clearTimeout(timerTimeout);
-                } else {
-                    // Remove playing state from all cards
-                    document.querySelectorAll('.sound-card').forEach(c => {
-                        c.classList.remove('playing');
-                    });
-
-                    // Play the new sound
-                    activeSound = playSound(sound.file);
-                    if (activeSound) {
-                        card.classList.add('playing');
-                        startTimer();
-                    }
+                // Check if sounds are loaded first
+                if (!soundsLoaded) {
+                    // Initialize audio context if needed and show loading state
+                    if (!audioContext) initAudioContext();
+                    
+                    // Temporarily show loading feedback
+                    const originalContent = card.innerHTML;
+                    card.innerHTML = `
+                        <div class="sound-icon">⏳</div>
+                        <div>Loading...</div>
+                    `;
+                    
+                    // Wait a bit and check again, or restore original state
+                    setTimeout(() => {
+                        if (soundsLoaded) {
+                            card.innerHTML = originalContent;
+                            // Trigger the click again now that sounds are loaded
+                            handleSoundCardClick(sound, card);
+                        } else {
+                            card.innerHTML = originalContent;
+                        }
+                    }, 1000);
+                    return;
                 }
+
+                handleSoundCardClick(sound, card);
             });
 
             return card;
+        }
+
+        // Handle sound card click logic
+        function handleSoundCardClick(sound, card) {
+            // Initialize audio context on first click
+            if (!audioContext) initAudioContext();
+
+            // Handle click behavior
+            if (activeSound && activeSound.file === sound.file) {
+                // Stop the sound if it's already playing
+                activeSound.source.stop();
+                activeSound = null;
+                card.classList.remove('playing');
+                clearTimeout(timerTimeout);
+            } else {
+                // Remove playing state from all cards
+                document.querySelectorAll('.sound-card').forEach(c => {
+                    c.classList.remove('playing');
+                });
+
+                // Play the new sound
+                activeSound = playSound(sound.file);
+                if (activeSound) {
+                    card.classList.add('playing');
+                    startTimer();
+                }
+            }
         }
 
         // Timer functionality
@@ -459,6 +523,9 @@
         // Initialize volume controls
         initializeVolume();
         createVolumeControls();
+        
+        // Set initial loading state for sound cards
+        updateSoundCardsState();
 
         // Service Worker Registration
         if ('serviceWorker' in navigator) {
