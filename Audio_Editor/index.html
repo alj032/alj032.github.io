@@ -92,6 +92,33 @@
             cursor: crosshair;
         }
 
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .controls {
             display: flex;
             gap: 15px;
@@ -248,6 +275,9 @@
             
             <div class="waveform-container">
                 <canvas id="waveform"></canvas>
+                <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                    <div class="loading-spinner"></div>
+                </div>
             </div>
             
             <div class="selection-info" id="selectionInfo">
@@ -294,6 +324,8 @@
                 this.canvas = document.getElementById('waveform');
                 this.ctx = this.canvas.getContext('2d');
                 this.gainNode = null;
+                this.isSelecting = false;
+                this.animationId = null;
                 
                 this.initializeElements();
                 this.setupEventListeners();
@@ -316,6 +348,7 @@
                 this.fileInfo = document.getElementById('fileInfo');
                 this.volumeSlider = document.getElementById('volumeSlider');
                 this.volumeDisplay = document.getElementById('volumeDisplay');
+                this.loadingOverlay = document.getElementById('loadingOverlay');
             }
             
             setupEventListeners() {
@@ -364,6 +397,13 @@
                 this.canvas.addEventListener('mousedown', (e) => this.startSelection(e));
                 this.canvas.addEventListener('mousemove', (e) => this.updateSelection(e));
                 this.canvas.addEventListener('mouseup', (e) => this.endSelection(e));
+                
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    if (this.audioBuffer) {
+                        this.drawWaveform();
+                    }
+                });
             }
             
             async handleFileSelect(event) {
@@ -375,11 +415,13 @@
             
             async handleFile(file) {
                 try {
+                    this.showLoading(true);
+                    
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     
                     const arrayBuffer = await file.arrayBuffer();
                     this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-                    this.originalBuffer = this.audioBuffer;
+                    this.originalBuffer = this.copyAudioBuffer(this.audioBuffer);
                     this.duration = this.audioBuffer.duration;
                     
                     this.displayFileInfo(file);
@@ -387,9 +429,32 @@
                     this.audioEditor.style.display = 'block';
                     this.enableControls();
                     
+                    this.showLoading(false);
+                    
                 } catch (error) {
+                    this.showLoading(false);
                     alert('Error loading audio file: ' + error.message);
                 }
+            }
+            
+            showLoading(show) {
+                this.loadingOverlay.style.display = show ? 'flex' : 'none';
+            }
+            
+            copyAudioBuffer(buffer) {
+                const newBuffer = this.audioContext.createBuffer(
+                    buffer.numberOfChannels,
+                    buffer.length,
+                    buffer.sampleRate
+                );
+                
+                for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                    const oldData = buffer.getChannelData(channel);
+                    const newData = newBuffer.getChannelData(channel);
+                    newData.set(oldData);
+                }
+                
+                return newBuffer;
             }
             
             displayFileInfo(file) {
@@ -467,6 +532,11 @@
                 if (this.hasSelection) {
                     this.drawSelection();
                 }
+                
+                // Draw playhead if playing
+                if (this.isPlaying) {
+                    this.drawPlayhead();
+                }
             }
             
             drawSelection() {
@@ -485,6 +555,18 @@
                 this.ctx.lineTo(startX, this.canvas.getBoundingClientRect().height);
                 this.ctx.moveTo(endX, 0);
                 this.ctx.lineTo(endX, this.canvas.getBoundingClientRect().height);
+                this.ctx.stroke();
+            }
+            
+            drawPlayhead() {
+                const currentTime = this.pauseTime || (this.audioContext.currentTime - this.startTime);
+                const x = (currentTime / this.duration) * this.canvas.getBoundingClientRect().width;
+                
+                this.ctx.strokeStyle = '#ff0000';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, 0);
+                this.ctx.lineTo(x, this.canvas.getBoundingClientRect().height);
                 this.ctx.stroke();
             }
             
@@ -565,6 +647,7 @@
                 this.stopBtn.disabled = false;
                 
                 this.updateTimeDisplay();
+                this.animatePlayhead();
             }
             
             pause() {
@@ -576,11 +659,19 @@
                 
                 this.playBtn.disabled = false;
                 this.pauseBtn.disabled = true;
+                
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
             }
             
             stop() {
                 if (this.audioSource) {
-                    this.audioSource.stop();
+                    try {
+                        this.audioSource.stop();
+                    } catch (e) {
+                        // Source might already be stopped
+                    }
                 }
                 
                 this.isPlaying = false;
@@ -590,7 +681,19 @@
                 this.pauseBtn.disabled = true;
                 this.stopBtn.disabled = true;
                 
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+                
+                this.drawWaveform();
                 this.updateTimeDisplay();
+            }
+            
+            animatePlayhead() {
+                if (this.isPlaying) {
+                    this.drawWaveform();
+                    this.animationId = requestAnimationFrame(() => this.animatePlayhead());
+                }
             }
             
             updateTimeDisplay() {
@@ -645,7 +748,13 @@
                 this.enableDownload();
                 
                 // Update file info
-                this.fileInfo.children[1].children[1].textContent = this.formatDuration(this.duration);
+                const formatDuration = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                };
+                
+                document.querySelector('.file-info .info-item:nth-child(2) .info-value').textContent = formatDuration(this.duration);
             }
             
             applyFadeIn() {
@@ -663,8 +772,11 @@
                 const endSample = Math.floor(this.selectionEnd * this.audioBuffer.sampleRate);
                 const length = endSample - startSample;
                 
-                for (let channel = 0; channel < this.audioBuffer.numberOfChannels; channel++) {
-                    const channelData = this.audioBuffer.getChannelData(channel);
+                // Create a copy of the buffer for the fade operation
+                const tempBuffer = this.copyAudioBuffer(this.audioBuffer);
+                
+                for (let channel = 0; channel < tempBuffer.numberOfChannels; channel++) {
+                    const channelData = tempBuffer.getChannelData(channel);
                     
                     for (let i = 0; i < length; i++) {
                         const sampleIndex = startSample + i;
@@ -675,14 +787,9 @@
                     }
                 }
                 
+                this.audioBuffer = tempBuffer;
                 this.drawWaveform();
                 this.enableDownload();
-            }
-            
-            formatDuration(seconds) {
-                const mins = Math.floor(seconds / 60);
-                const secs = Math.floor(seconds % 60);
-                return `${mins}:${secs.toString().padStart(2, '0')}`;
             }
             
             downloadAudio() {
@@ -735,7 +842,7 @@
             }
             
             resetAudio() {
-                this.audioBuffer = this.originalBuffer;
+                this.audioBuffer = this.copyAudioBuffer(this.originalBuffer);
                 this.duration = this.audioBuffer.duration;
                 this.hasSelection = false;
                 this.selectionStart = 0;
@@ -750,7 +857,13 @@
                 this.downloadBtn.disabled = false;
                 
                 // Update file info
-                this.fileInfo.children[1].children[1].textContent = this.formatDuration(this.duration);
+                const formatDuration = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                };
+                
+                document.querySelector('.file-info .info-item:nth-child(2) .info-value').textContent = formatDuration(this.duration);
             }
             
             enableControls() {
