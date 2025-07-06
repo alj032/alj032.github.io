@@ -29,6 +29,15 @@
             max-width: 300px;
         }
 
+        .volume-info {
+            text-align: center;
+            margin: 10px auto 20px;
+            max-width: 400px;
+            font-size: 0.9em;
+            color: #888;
+            line-height: 1.4;
+        }
+
         .timer-select {
             background: #2d2d2d;
             color: white;
@@ -91,6 +100,7 @@
             align-items: center;
             gap: 15px;
             z-index: 10;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
         .volume-slider {
@@ -100,6 +110,7 @@
             height: 4px;
             background: #666;
             border-radius: 2px;
+            position: relative;
         }
 
             .volume-slider::-webkit-slider-thumb {
@@ -110,53 +121,44 @@
                 background: #fff;
                 border-radius: 50%;
                 cursor: pointer;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             }
 
-        /* Debug panel styles */
-        .debug-panel {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-            color: #00ff00;
-            z-index: 1000;
-            width: 300px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .debug-row {
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .debug-title {
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .debug-button {
-            background: #333;
-            color: #fff;
-            border: none;
-            padding: 5px 10px;
-            margin-top: 5px;
-            cursor: pointer;
-            border-radius: 3px;
-        }
-
-            .debug-button:hover {
-                background: #444;
+            .volume-slider::-moz-range-thumb {
+                width: 15px;
+                height: 15px;
+                background: #fff;
+                border-radius: 50%;
+                cursor: pointer;
+                border: none;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             }
+
+        .volume-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            min-width: 30px;
+            text-align: center;
+        }
 
         @media (max-width: 768px) {
             .sound-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .volume-container {
+                padding: 20px;
+                border-radius: 20px;
+                bottom: 15px;
+            }
+            
+            .volume-slider {
+                width: 150px;
+            }
+            
+            .volume-info {
+                font-size: 0.8em;
+                padding: 0 10px;
             }
         }
     </style>
@@ -176,94 +178,19 @@
         </select>
     </div>
 
+    <div class="volume-info">
+        💡 Volume works relative to your device's volume setting. Use your device's volume buttons for overall loudness.
+    </div>
+
     <div class="sound-grid" id="soundGrid"></div>
 
     <div class="volume-container">
-        <span>🔊</span>
-        <input type="range" class="volume-slider" id="masterVolume" min="0" max="1" step="0.01" value="0.5">
-    </div>
-
-    <!-- Debug Panel -->
-    <div class="debug-panel" id="debugPanel">
-        <div class="debug-title">Debug Information</div>
-        <div class="debug-row">
-            <span>Audio Context:</span>
-            <span id="audioContextState">Not created</span>
-        </div>
-        <div class="debug-row">
-            <span>Active Sound:</span>
-            <span id="activeSoundInfo">None</span>
-        </div>
-        <div class="debug-row">
-            <span>Timer:</span>
-            <span id="timerInfo">None</span>
-        </div>
-        <div class="debug-row">
-            <span>Buffer Status:</span>
-            <div id="bufferStatus">Not loaded</div>
-        </div>
-        <div class="debug-row">
-            <span>Last Event:</span>
-            <span id="lastEvent">None</span>
-        </div>
-        <div class="debug-row">
-            <span>Performance:</span>
-            <span id="performanceInfo">-</span>
-        </div>
-        <button class="debug-button" id="forceResume">Force Resume Audio</button>
-        <button class="debug-button" id="checkAudioFile">Check Audio File</button>
+        <span>🔉</span>
+        <input type="range" class="volume-slider" id="masterVolume" min="0" max="1" step="0.01" value="0.8">
+        <span class="volume-label" id="volumeLabel">80%</span>
     </div>
 
     <script>
-        // Debug functions
-        const DEBUG = {
-            updatePanel: function (key, value) {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.textContent = value;
-                }
-            },
-            logEvent: function (event) {
-                console.log(`[DEBUG] ${event}`);
-                this.updatePanel('lastEvent', event);
-            },
-            updateContextState: function (state) {
-                this.updatePanel('audioContextState', state);
-            },
-            updateActiveSound: function (sound) {
-                this.updatePanel('activeSoundInfo', sound ? sound.file : 'None');
-            },
-            updateTimer: function (timer) {
-                this.updatePanel('timerInfo', timer ? `${timer / 1000}s remaining` : 'None');
-            },
-            updateBufferStatus: function () {
-                const bufferStatus = document.getElementById('bufferStatus');
-                bufferStatus.innerHTML = '';
-
-                for (const file in audioBuffers) {
-                    const status = audioBuffers[file] ? '✅' : '❌';
-                    const div = document.createElement('div');
-                    div.textContent = `${file}: ${status}`;
-                    bufferStatus.appendChild(div);
-                }
-            },
-            startPerformanceMonitor: function () {
-                if (this.perfInterval) clearInterval(this.perfInterval);
-
-                this.perfInterval = setInterval(() => {
-                    const memory = window.performance && window.performance.memory ?
-                        `Memory: ${Math.round(window.performance.memory.usedJSHeapSize / 1048576)}MB` :
-                        'Memory: N/A';
-
-                    const audioLag = audioContext ?
-                        `Latency: ${Math.round(audioContext.baseLatency * 1000)}ms` :
-                        'Latency: N/A';
-
-                    this.updatePanel('performanceInfo', `${memory}, ${audioLag}`);
-                }, 1000);
-            }
-        };
-
         // Sound definitions
         const sounds = [
             { name: 'White Noise', icon: '🌊', file: 'white-noise.mp3' },
@@ -274,50 +201,41 @@
             { name: 'Stream', icon: '💧', file: 'stream.mp3' }
         ];
 
-        // Create the Web Audio Context (initialized on first user interaction)
+        // Audio variables
         let audioContext = null;
         let audioBuffers = {};
         let activeSound = null;
         let timerTimeout = null;
         let gainNode = null;
-        let lastPlayTime = 0;
 
-        // Initialize audio context (must be done on user interaction)
+        // Initialize audio context
         function initAudioContext() {
             if (!audioContext) {
-                DEBUG.logEvent('Creating Audio Context');
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-                // Monitor audio context state changes
-                audioContext.onstatechange = () => {
-                    DEBUG.updateContextState(audioContext.state);
-                    DEBUG.logEvent(`Audio Context state changed to: ${audioContext.state}`);
-                };
 
                 // Create master volume control
                 gainNode = audioContext.createGain();
                 gainNode.connect(audioContext.destination);
 
-                // Set initial volume
-                const volumeValue = document.getElementById('masterVolume').value;
+                // Set initial volume from saved preference or default
+                const savedVolume = localStorage.getItem('sleepSoundsVolume');
+                const volumeValue = savedVolume ? parseFloat(savedVolume) : 0.8;
                 gainNode.gain.value = volumeValue;
-
-                // Update debug panel
-                DEBUG.updateContextState(audioContext.state);
-                DEBUG.startPerformanceMonitor();
+                
+                // Update the slider and display if they exist
+                const masterVolumeSlider = document.getElementById('masterVolume');
+                if (masterVolumeSlider) {
+                    masterVolumeSlider.value = volumeValue;
+                    updateVolumeDisplay(volumeValue);
+                }
 
                 // Load all sound files
                 preloadSounds();
             }
 
-            // Ensure audio context is running (needed for some browsers)
+            // Ensure audio context is running
             if (audioContext.state === 'suspended') {
-                DEBUG.logEvent('Resuming suspended Audio Context');
-                audioContext.resume().then(() => {
-                    DEBUG.logEvent(`Audio Context resumed, state: ${audioContext.state}`);
-                }).catch(error => {
-                    DEBUG.logEvent(`Failed to resume Audio Context: ${error.message}`);
-                });
+                audioContext.resume();
             }
 
             return audioContext;
@@ -325,18 +243,12 @@
 
         // Preload and decode all sound files
         function preloadSounds() {
-            DEBUG.logEvent('Preloading all sounds');
-            let loadedCount = 0;
-
             sounds.forEach(sound => {
-                DEBUG.logEvent(`Fetching: ${sound.file}`);
-
                 fetch(`sounds/${sound.file}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
-                        DEBUG.logEvent(`Received ${sound.file}, decoding...`);
                         return response.arrayBuffer();
                     })
                     .then(arrayBuffer => {
@@ -344,77 +256,24 @@
                     })
                     .then(audioBuffer => {
                         audioBuffers[sound.file] = audioBuffer;
-                        loadedCount++;
-                        DEBUG.logEvent(`Loaded (${loadedCount}/${sounds.length}): ${sound.file}, duration: ${audioBuffer.duration.toFixed(2)}s`);
-                        DEBUG.updateBufferStatus();
-
-                        // Log buffer details for debugging
-                        console.log(`Buffer details for ${sound.file}:`, {
-                            duration: audioBuffer.duration,
-                            numberOfChannels: audioBuffer.numberOfChannels,
-                            sampleRate: audioBuffer.sampleRate,
-                            length: audioBuffer.length
-                        });
                     })
                     .catch(error => {
                         console.error(`Error loading sound: ${sound.file}`, error);
-                        DEBUG.logEvent(`Error loading ${sound.file}: ${error.message}`);
                     });
             });
         }
 
-        // Create an analyzer to monitor audio quality
-        function createAnalyser(source) {
-            const analyser = audioContext.createAnalyser();
-            analyser.fftSize = 2048;
-            source.connect(analyser);
-
-            // Create a buffer to get frequency data
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-
-            // Setup monitoring of drops in frequency data
-            const monitorInterval = setInterval(() => {
-                if (!activeSound) {
-                    clearInterval(monitorInterval);
-                    return;
-                }
-
-                analyser.getByteFrequencyData(dataArray);
-
-                // Calculate average frequency power
-                let sum = 0;
-                for (let i = 0; i < bufferLength; i++) {
-                    sum += dataArray[i];
-                }
-                const average = sum / bufferLength;
-
-                // Log significant drops (might indicate skips)
-                if (average < 10 && lastAverage > 40) {
-                    DEBUG.logEvent(`Potential audio skip detected! Frequency drop: ${lastAverage.toFixed(1)} -> ${average.toFixed(1)}`);
-                }
-
-                lastAverage = average;
-            }, 100);
-
-            return analyser;
-        }
-
-        let lastAverage = 0;
-
-        // Play a sound with seamless looping using precise scheduling
+        // Play a sound with seamless looping
         function playSound(soundFile) {
             if (!audioContext) initAudioContext();
 
             // Ensure audio context is running
             if (audioContext.state !== 'running') {
-                DEBUG.logEvent(`Forcing audio context resume before playback`);
                 audioContext.resume();
             }
 
             // Stop currently playing sound if any
             if (activeSound) {
-                DEBUG.logEvent(`Stopping current sound: ${activeSound.file}`);
                 activeSound.source.stop();
                 activeSound = null;
             }
@@ -422,41 +281,22 @@
             // Check if the buffer is loaded
             const buffer = audioBuffers[soundFile];
             if (!buffer) {
-                DEBUG.logEvent(`Sound not loaded yet: ${soundFile}`);
                 return null;
             }
-
-            DEBUG.logEvent(`Playing: ${soundFile}, duration: ${buffer.duration.toFixed(2)}s`);
 
             // Create and configure source
             const source = audioContext.createBufferSource();
             source.buffer = buffer;
             source.loop = true;
 
-            // Add monitoring
-            const analyser = createAnalyser(source);
-
             // Connect to the gain node (volume control)
             source.connect(gainNode);
 
-            // Add event listeners for debugging
-            source.onended = (event) => {
-                if (event.renderedBuffer) {
-                    DEBUG.logEvent(`Sound ended naturally: ${soundFile}`);
-                } else {
-                    DEBUG.logEvent(`Sound stopped programmatically: ${soundFile}`);
-                }
-            };
-
-            // Log the current time for performance tracking
-            lastPlayTime = performance.now();
-
-            // Start playback with precise scheduling
+            // Start playback
             const startTime = audioContext.currentTime;
             source.start(startTime);
-            DEBUG.logEvent(`Started playback at context time: ${startTime.toFixed(3)}s`);
 
-            return { source, file: soundFile, analyser, startTime };
+            return { source, file: soundFile, startTime };
         }
 
         // Create sound cards
@@ -472,18 +312,13 @@
                 // Initialize audio context on first click
                 if (!audioContext) initAudioContext();
 
-                DEBUG.logEvent(`Card clicked: ${sound.name}`);
-
                 // Handle click behavior
                 if (activeSound && activeSound.file === sound.file) {
                     // Stop the sound if it's already playing
-                    DEBUG.logEvent(`Stopping current sound: ${sound.file}`);
                     activeSound.source.stop();
                     activeSound = null;
                     card.classList.remove('playing');
                     clearTimeout(timerTimeout);
-                    DEBUG.updateActiveSound(null);
-                    DEBUG.updateTimer(null);
                 } else {
                     // Remove playing state from all cards
                     document.querySelectorAll('.sound-card').forEach(c => {
@@ -495,7 +330,6 @@
                     if (activeSound) {
                         card.classList.add('playing');
                         startTimer();
-                        DEBUG.updateActiveSound(activeSound);
                     }
                 }
             });
@@ -508,21 +342,52 @@
             clearTimeout(timerTimeout);
             const duration = parseInt(document.getElementById('timer').value);
 
-            DEBUG.updateTimer(duration > 0 ? duration * 1000 : 'Continuous');
-
             if (duration > 0 && activeSound) {
-                DEBUG.logEvent(`Timer started: ${duration} seconds`);
-
                 timerTimeout = setTimeout(() => {
-                    DEBUG.logEvent(`Timer expired after ${duration} seconds`);
-
                     if (activeSound) {
                         activeSound.source.stop();
                         activeSound = null;
                         document.querySelector('.playing')?.classList.remove('playing');
-                        DEBUG.updateActiveSound(null);
                     }
                 }, duration * 1000);
+            }
+        }
+
+        // Volume management with persistence
+        function initializeVolume() {
+            const masterVolume = document.getElementById('masterVolume');
+            const volumeLabel = document.getElementById('volumeLabel');
+            
+            // Try to load saved volume preference, default to 0.8 for better audibility
+            const savedVolume = localStorage.getItem('sleepSoundsVolume');
+            const defaultVolume = savedVolume ? parseFloat(savedVolume) : 0.8;
+            
+            masterVolume.value = defaultVolume;
+            updateVolumeDisplay(defaultVolume);
+            
+            // Apply volume if audio context exists
+            if (audioContext && gainNode) {
+                gainNode.gain.value = defaultVolume;
+            }
+        }
+
+        // Update volume display elements
+        function updateVolumeDisplay(volume) {
+            const volumeLabel = document.getElementById('volumeLabel');
+            const speakerIcon = document.querySelector('.volume-container span:first-child');
+            
+            // Update percentage
+            volumeLabel.textContent = Math.round(volume * 100) + '%';
+            
+            // Update speaker icon based on volume level
+            if (volume === 0) {
+                speakerIcon.textContent = '🔇';
+            } else if (volume < 0.3) {
+                speakerIcon.textContent = '🔈';
+            } else if (volume < 0.7) {
+                speakerIcon.textContent = '🔉';
+            } else {
+                speakerIcon.textContent = '🔊';
             }
         }
 
@@ -531,153 +396,58 @@
         masterVolume.addEventListener('input', (e) => {
             const volume = parseFloat(e.target.value);
 
+            // Save volume preference
+            localStorage.setItem('sleepSoundsVolume', volume.toString());
+            
+            // Update display
+            updateVolumeDisplay(volume);
+
             // Only adjust volume if audio context is initialized
             if (audioContext && gainNode) {
                 gainNode.gain.value = volume;
-                DEBUG.logEvent(`Volume changed to: ${volume.toFixed(2)}`);
             }
         });
 
-        // Debug panel functionality
-        document.getElementById('forceResume').addEventListener('click', () => {
-            if (audioContext) {
-                DEBUG.logEvent('Manually forcing audio context resume');
-                audioContext.resume().then(() => {
-                    DEBUG.logEvent('Audio context successfully resumed');
-                }).catch(error => {
-                    DEBUG.logEvent(`Failed to resume: ${error.message}`);
-                });
-            } else {
-                DEBUG.logEvent('Cannot resume: Audio context not created yet');
-            }
-        });
-
-        document.getElementById('checkAudioFile').addEventListener('click', () => {
-            if (!activeSound) {
-                DEBUG.logEvent('No active sound to check');
-                return;
-            }
-
-            const buffer = audioBuffers[activeSound.file];
-            if (!buffer) {
-                DEBUG.logEvent('Buffer not available for check');
-                return;
-            }
-
-            // Check for silence at the start or end of the file
-            const checkSilence = (buffer, position, duration) => {
-                const start = Math.floor(position * buffer.sampleRate);
-                const length = Math.floor(duration * buffer.sampleRate);
-                let isSilent = true;
-
-                // Check first channel for silence (RMS below threshold)
-                const channelData = buffer.getChannelData(0);
-                let sum = 0;
-
-                for (let i = start; i < start + length && i < channelData.length; i++) {
-                    sum += channelData[i] * channelData[i];
+        // Add a "Full Volume" button for easy system-relative maximum
+        function createVolumeControls() {
+            const volumeContainer = document.querySelector('.volume-container');
+            
+            // Create full volume button
+            const fullVolumeBtn = document.createElement('button');
+            fullVolumeBtn.innerHTML = 'MAX';
+            fullVolumeBtn.style.cssText = `
+                background: rgba(255,255,255,0.1);
+                border: 1px solid rgba(255,255,255,0.2);
+                color: white;
+                font-size: 0.8em;
+                cursor: pointer;
+                padding: 5px 8px;
+                border-radius: 5px;
+                transition: all 0.2s;
+                font-weight: bold;
+            `;
+            fullVolumeBtn.title = 'Set to maximum volume (100% relative to your device volume)';
+            
+            fullVolumeBtn.addEventListener('click', () => {
+                masterVolume.value = 1.0;
+                localStorage.setItem('sleepSoundsVolume', '1.0');
+                updateVolumeDisplay(1.0);
+                if (audioContext && gainNode) {
+                    gainNode.gain.value = 1.0;
                 }
-
-                const rms = Math.sqrt(sum / length);
-                return rms < 0.01; // Threshold for "silence"
-            };
-
-            const startSilence = checkSilence(buffer, 0, 0.1);
-            const endSilence = checkSilence(buffer, buffer.duration - 0.1, 0.1);
-
-            DEBUG.logEvent(`Audio file check for ${activeSound.file}:`);
-            DEBUG.logEvent(`- Duration: ${buffer.duration.toFixed(3)}s`);
-            DEBUG.logEvent(`- Start silence: ${startSilence ? 'YES' : 'NO'}`);
-            DEBUG.logEvent(`- End silence: ${endSilence ? 'YES' : 'NO'}`);
-
-            if (startSilence) {
-                DEBUG.logEvent('⚠️ WARNING: File has silence at start - may cause skips when looping');
-            }
-
-            if (endSilence) {
-                DEBUG.logEvent('⚠️ WARNING: File has silence at end - may cause skips when looping');
-            }
-        });
-
-        // Performance monitoring - check for potential audio skips
-        let lastTimeStamp = 0;
-        const monitorPerformance = (timestamp) => {
-            if (lastTimeStamp > 0) {
-                const delta = timestamp - lastTimeStamp;
-                // Log long frames (potential audio skip causes)
-                if (delta > 100) { // More than 100ms between frames
-                    DEBUG.logEvent(`Long frame detected: ${delta.toFixed(1)}ms (may cause audio skip)`);
-                }
-            }
-            lastTimeStamp = timestamp;
-            requestAnimationFrame(monitorPerformance);
-        };
-        requestAnimationFrame(monitorPerformance);
-
-        // Alternative implementation for seamless looping
-        function createSeamlessLoop(soundFile) {
-            const buffer = audioBuffers[soundFile];
-            if (!buffer) return null;
-
-            // Create two sources for crossfading
-            const source1 = audioContext.createBufferSource();
-            const source2 = audioContext.createBufferSource();
-            source1.buffer = buffer;
-            source2.buffer = buffer;
-
-            // Create gain nodes for crossfading
-            const gain1 = audioContext.createGain();
-            const gain2 = audioContext.createGain();
-
-            // Connect the graph
-            source1.connect(gain1);
-            source2.connect(gain2);
-            gain1.connect(gainNode);
-            gain2.connect(gainNode);
-
-            // Start the first source immediately
-            source1.start(0);
-
-            // Schedule the second source to start slightly before the first one ends
-            const crossfadeDuration = 0.1; // 100ms crossfade
-            const secondStart = buffer.duration - crossfadeDuration;
-
-            // Function to handle scheduling the next playback
-            const scheduleNext = (currentTime) => {
-                // Schedule the next buffer to start
-                source2.start(currentTime + secondStart);
-
-                // Create the crossfade
-                gain1.gain.setValueAtTime(1, currentTime);
-                gain1.gain.linearRampToValueAtTime(0, currentTime + buffer.duration);
-
-                gain2.gain.setValueAtTime(0, currentTime + secondStart);
-                gain2.gain.linearRampToValueAtTime(1, currentTime + buffer.duration);
-
-                // Schedule the next iteration
-                setTimeout(() => {
-                    // Swap the sources for the next iteration
-                    [source1, source2] = [source2, source1];
-                    [gain1, gain2] = [gain2, gain1];
-
-                    // Calculate next scheduling time
-                    const nextTime = audioContext.currentTime;
-                    scheduleNext(nextTime);
-                }, (buffer.duration - crossfadeDuration) * 1000);
-            };
-
-            // Start the scheduling
-            scheduleNext(audioContext.currentTime);
-
-            return {
-                sources: [source1, source2],
-                gains: [gain1, gain2],
-                file: soundFile,
-                stop: function () {
-                    source1.stop();
-                    source2.stop();
-                }
-            };
+            });
+            
+            fullVolumeBtn.addEventListener('mouseenter', () => {
+                fullVolumeBtn.style.background = 'rgba(255,255,255,0.2)';
+                fullVolumeBtn.style.transform = 'scale(1.05)';
+            });
+            
+            fullVolumeBtn.addEventListener('mouseleave', () => {
+                fullVolumeBtn.style.background = 'rgba(255,255,255,0.1)';
+                fullVolumeBtn.style.transform = 'scale(1)';
+            });
+            
+            volumeContainer.appendChild(fullVolumeBtn);
         }
 
         // Initialize the app
@@ -686,83 +456,22 @@
             soundGrid.appendChild(createSoundCard(sound));
         });
 
+        // Initialize volume controls
+        initializeVolume();
+        createVolumeControls();
+
         // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
                     .then(registration => {
-                        DEBUG.logEvent('ServiceWorker registration successful');
+                        console.log('ServiceWorker registration successful');
                     })
                     .catch(err => {
-                        DEBUG.logEvent(`ServiceWorker registration failed: ${err.message}`);
+                        console.log('ServiceWorker registration failed:', err);
                     });
             });
         }
-
-        // Create additional debugging button to test alternative looping
-        const alternativeLoopButton = document.createElement('button');
-        alternativeLoopButton.className = 'debug-button';
-        alternativeLoopButton.textContent = 'Try Alternative Looping';
-        alternativeLoopButton.addEventListener('click', () => {
-            if (!audioContext) initAudioContext();
-
-            if (!activeSound) {
-                DEBUG.logEvent('No active sound to test alternative looping with');
-                return;
-            }
-
-            // Stop the current sound
-            activeSound.source.stop();
-
-            // Try the alternative looping method
-            DEBUG.logEvent(`Testing alternative looping for: ${activeSound.file}`);
-            activeSound = createSeamlessLoop(activeSound.file);
-            DEBUG.updateActiveSound(activeSound);
-        });
-        document.getElementById('debugPanel').appendChild(alternativeLoopButton);
-
-        // Add a button to check for browser audio issues
-        const checkBrowserButton = document.createElement('button');
-        checkBrowserButton.className = 'debug-button';
-        checkBrowserButton.textContent = 'Check Browser Audio';
-        checkBrowserButton.addEventListener('click', () => {
-            DEBUG.logEvent('Checking browser audio capabilities...');
-
-            // Check for AudioContext support
-            if (typeof AudioContext === 'undefined' && typeof webkitAudioContext === 'undefined') {
-                DEBUG.logEvent('❌ Browser does not support AudioContext');
-            } else {
-                DEBUG.logEvent('✅ Browser supports AudioContext');
-            }
-
-            // Check for looping support
-            const tempContext = new (window.AudioContext || window.webkitAudioContext)();
-            const tempSource = tempContext.createBufferSource();
-            if (typeof tempSource.loop === 'undefined') {
-                DEBUG.logEvent('❌ Browser does not support audio looping');
-            } else {
-                DEBUG.logEvent('✅ Browser supports audio looping');
-            }
-
-            // Check for WebAudio suspension issues
-            if (tempContext.state === 'suspended') {
-                DEBUG.logEvent('⚠️ WebAudio starts in suspended state (may need user interaction)');
-            }
-
-            // Close the temp context
-            tempContext.close();
-
-            // Check for AudioWorklet support (advanced audio processing)
-            if (typeof AudioWorkletNode === 'undefined') {
-                DEBUG.logEvent('⚠️ Browser does not support AudioWorklet (advanced audio processing)');
-            } else {
-                DEBUG.logEvent('✅ Browser supports AudioWorklet');
-            }
-
-            // Check browser and version
-            DEBUG.logEvent(`Browser: ${navigator.userAgent}`);
-        });
-        document.getElementById('debugPanel').appendChild(checkBrowserButton);
     </script>
 </body>
 </html>
