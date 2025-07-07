@@ -68,6 +68,11 @@
             transition: all 0.3s;
         }
         
+        select option {
+            background: #333;
+            color: white;
+        }
+        
         select:hover, button:hover {
             background: rgba(255, 255, 255, 0.2);
             border-color: rgba(255, 255, 255, 0.3);
@@ -187,8 +192,9 @@
 </head>
 <body>
     <div id="loading">
-        <div>Loading World Map...</div>
+        <div>Loading Earth Texture...</div>
         <div class="spinner"></div>
+        <div style="font-size: 14px; margin-top: 10px; opacity: 0.7;">Fetching NASA Blue Marble imagery</div>
     </div>
     
     <div id="container"></div>
@@ -299,10 +305,6 @@
         let trackingStartTime = null;
         let trackingInterval = null;
         
-        // Texture loader
-        const textureLoader = new THREE.TextureLoader();
-        textureLoader.crossOrigin = 'anonymous';
-        
         function init() {
             // Scene setup
             scene = new THREE.Scene();
@@ -389,145 +391,169 @@
         function createGlobe() {
             const geometry = new THREE.SphereGeometry(1, 128, 128);
             
-            // Create realistic Earth texture
+            // Load real Earth texture
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.crossOrigin = 'anonymous';
+            
+            // Using multiple texture options for reliability
+            const earthTextureUrls = [
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Blue_Marble_2015.jpg/2048px-Blue_Marble_2015.jpg',
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/2048px-The_Earth_seen_from_Apollo_17.jpg',
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2048px-Blue_Marble_2002.png'
+            ];
+            
+            let textureLoaded = false;
+            let textureIndex = 0;
+            
+            function loadTexture() {
+                if (textureIndex >= earthTextureUrls.length) {
+                    // If all URLs fail, create procedural texture as fallback
+                    createProceduralGlobe();
+                    return;
+                }
+                
+                textureLoader.load(
+                    earthTextureUrls[textureIndex],
+                    function(texture) {
+                        // Success
+                        textureLoaded = true;
+                        createGlobeWithTexture(texture);
+                    },
+                    undefined,
+                    function(error) {
+                        // Error - try next URL
+                        console.log('Failed to load texture from:', earthTextureUrls[textureIndex]);
+                        textureIndex++;
+                        loadTexture();
+                    }
+                );
+            }
+            
+            function createGlobeWithTexture(texture) {
+                const material = new THREE.MeshPhongMaterial({
+                    map: texture,
+                    bumpMap: texture,
+                    bumpScale: 0.01,
+                    specularMap: createSpecularMap(),
+                    specular: new THREE.Color('grey'),
+                    shininess: 20
+                });
+                
+                globe = new THREE.Mesh(geometry, material);
+                globe.castShadow = true;
+                globe.receiveShadow = true;
+                scene.add(globe);
+                
+                // Store the original texture for basemap switching
+                globe.userData.originalTexture = texture;
+            }
+            
+            function createProceduralGlobe() {
+                // Fallback to procedural texture if images can't load
+                const canvas = document.createElement('canvas');
+                canvas.width = 2048;
+                canvas.height = 1024;
+                const ctx = canvas.getContext('2d');
+                
+                // Ocean base
+                ctx.fillStyle = '#1e3a5f';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Add continents (simplified world map)
+                ctx.fillStyle = '#2d5016';
+                
+                // Africa
+                ctx.beginPath();
+                ctx.ellipse(canvas.width * 0.55, canvas.height * 0.6, 80, 120, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Europe
+                ctx.beginPath();
+                ctx.ellipse(canvas.width * 0.52, canvas.height * 0.35, 60, 40, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Asia
+                ctx.beginPath();
+                ctx.ellipse(canvas.width * 0.7, canvas.height * 0.35, 150, 80, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // North America
+                ctx.beginPath();
+                ctx.ellipse(canvas.width * 0.25, canvas.height * 0.35, 100, 80, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // South America
+                ctx.beginPath();
+                ctx.ellipse(canvas.width * 0.3, canvas.height * 0.7, 50, 100, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Australia
+                ctx.beginPath();
+                ctx.ellipse(canvas.width * 0.8, canvas.height * 0.75, 60, 40, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add texture details
+                for (let i = 0; i < 1000; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    const size = Math.random() * 10;
+                    const opacity = Math.random() * 0.3;
+                    
+                    ctx.fillStyle = `rgba(139, 195, 74, ${opacity})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Ice caps
+                ctx.fillStyle = '#e8f5e9';
+                ctx.fillRect(0, 0, canvas.width, 50);
+                ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                createGlobeWithTexture(texture);
+            }
+            
+            // Start loading texture
+            loadTexture();
+        }
+        
+        function createSpecularMap() {
             const canvas = document.createElement('canvas');
             canvas.width = 2048;
             canvas.height = 1024;
             const ctx = canvas.getContext('2d');
             
-            // Create a realistic Earth-like texture
-            const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            // Create a more realistic specular map
+            // Bright areas = water (reflective), dark areas = land (non-reflective)
             
-            // Ocean base
-            ctx.fillStyle = '#1e3a5f';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Add continents (simplified world map)
-            ctx.fillStyle = '#2d5016';
-            
-            // Africa
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.55, canvas.height * 0.6, 80, 120, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Europe
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.52, canvas.height * 0.35, 60, 40, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Asia
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.7, canvas.height * 0.35, 150, 80, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // North America
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.25, canvas.height * 0.35, 100, 80, -0.3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // South America
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.3, canvas.height * 0.7, 50, 100, 0.2, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Australia
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.8, canvas.height * 0.75, 60, 40, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Add texture details
-            for (let i = 0; i < 1000; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const size = Math.random() * 10;
-                const opacity = Math.random() * 0.3;
-                
-                ctx.fillStyle = `rgba(139, 195, 74, ${opacity})`;
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
-            // Ice caps
-            ctx.fillStyle = '#e8f5e9';
-            ctx.fillRect(0, 0, canvas.width, 50);
-            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
-            
-            // Add noise for realism
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            for (let i = 0; i < data.length; i += 4) {
-                const noise = (Math.random() - 0.5) * 20;
-                data[i] += noise;
-                data[i + 1] += noise;
-                data[i + 2] += noise;
-            }
-            ctx.putImageData(imageData, 0, 0);
-            
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.needsUpdate = true;
-            
-            // Create bump map
-            const bumpCanvas = document.createElement('canvas');
-            bumpCanvas.width = 1024;
-            bumpCanvas.height = 512;
-            const bumpCtx = bumpCanvas.getContext('2d');
-            bumpCtx.filter = 'blur(2px)';
-            bumpCtx.drawImage(canvas, 0, 0, bumpCanvas.width, bumpCanvas.height);
-            const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
-            
-            const material = new THREE.MeshPhongMaterial({
-                map: texture,
-                bumpMap: bumpTexture,
-                bumpScale: 0.02,
-                specularMap: createSpecularMap(),
-                specular: new THREE.Color('grey'),
-                shininess: 10
-            });
-            
-            globe = new THREE.Mesh(geometry, material);
-            globe.castShadow = true;
-            globe.receiveShadow = true;
-            scene.add(globe);
-        }
-        
-        function createSpecularMap() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1024;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-            
-            // Dark for land, bright for water (inverse of land)
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Dark areas for land
+            // Start with all black (land)
             ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Continents (matching globe texture positions)
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.55, canvas.height * 0.6, 80, 120, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // Add ocean areas (bright)
+            ctx.fillStyle = '#808080';
             
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.52, canvas.height * 0.35, 60, 40, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // Pacific Ocean
+            ctx.fillRect(0, 0, canvas.width * 0.4, canvas.height);
+            ctx.fillRect(canvas.width * 0.85, 0, canvas.width * 0.15, canvas.height);
             
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.7, canvas.height * 0.35, 150, 80, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // Atlantic Ocean
+            ctx.fillRect(canvas.width * 0.35, canvas.height * 0.2, canvas.width * 0.2, canvas.height * 0.6);
             
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.25, canvas.height * 0.35, 100, 80, -0.3, 0, Math.PI * 2);
-            ctx.fill();
+            // Indian Ocean
+            ctx.fillRect(canvas.width * 0.6, canvas.height * 0.4, canvas.width * 0.2, canvas.height * 0.4);
             
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.3, canvas.height * 0.7, 50, 100, 0.2, 0, Math.PI * 2);
-            ctx.fill();
+            // Arctic Ocean
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.1);
             
-            ctx.beginPath();
-            ctx.ellipse(canvas.width * 0.8, canvas.height * 0.75, 60, 40, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // Antarctic Ocean
+            ctx.fillRect(0, canvas.height * 0.9, canvas.width, canvas.height * 0.1);
+            
+            // Blur for smoother transitions
+            ctx.filter = 'blur(20px)';
+            ctx.drawImage(canvas, 0, 0);
             
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;
@@ -1199,76 +1225,176 @@ ${points}
         function changeBasemap(event) {
             const basemap = event.target.value;
             
-            // Create different texture styles
-            const canvas = document.createElement('canvas');
-            canvas.width = 2048;
-            canvas.height = 1024;
-            const ctx = canvas.getContext('2d');
+            if (!globe) return;
+            
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.crossOrigin = 'anonymous';
             
             switch (basemap) {
                 case 'realistic':
-                    // Already created in createGlobe
-                    location.reload(); // Simplest way to reset to default
+                    // Use original texture if available
+                    if (globe.userData.originalTexture) {
+                        globe.material.map = globe.userData.originalTexture;
+                        globe.material.needsUpdate = true;
+                    }
                     break;
+                    
                 case 'political':
-                    ctx.fillStyle = '#1565C0';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    // Create political map texture
+                    const politicalCanvas = document.createElement('canvas');
+                    politicalCanvas.width = 2048;
+                    politicalCanvas.height = 1024;
+                    const politicalCtx = politicalCanvas.getContext('2d');
+                    
+                    politicalCtx.fillStyle = '#1565C0';
+                    politicalCtx.fillRect(0, 0, politicalCanvas.width, politicalCanvas.height);
+                    
                     // Add country-colored regions
-                    const colors = ['#e53935', '#43a047', '#fb8c00', '#8e24aa', '#00acc1'];
-                    for (let i = 0; i < 50; i++) {
-                        ctx.fillStyle = colors[i % colors.length];
-                        ctx.beginPath();
-                        ctx.arc(
-                            Math.random() * canvas.width,
-                            Math.random() * canvas.height,
-                            Math.random() * 100 + 50,
+                    const colors = ['#e53935', '#43a047', '#fb8c00', '#8e24aa', '#00acc1', '#fdd835', '#d81b60'];
+                    for (let i = 0; i < 100; i++) {
+                        politicalCtx.fillStyle = colors[i % colors.length];
+                        politicalCtx.beginPath();
+                        politicalCtx.arc(
+                            Math.random() * politicalCanvas.width,
+                            Math.random() * politicalCanvas.height,
+                            Math.random() * 60 + 30,
                             0,
                             Math.PI * 2
                         );
-                        ctx.fill();
+                        politicalCtx.fill();
                     }
+                    
+                    const politicalTexture = new THREE.CanvasTexture(politicalCanvas);
+                    politicalTexture.needsUpdate = true;
+                    globe.material.map = politicalTexture;
+                    globe.material.needsUpdate = true;
                     break;
+                    
                 case 'topographic':
-                    // Height-based coloring
-                    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-                    gradient.addColorStop(0, '#ffffff');
-                    gradient.addColorStop(0.2, '#8d6e63');
-                    gradient.addColorStop(0.5, '#4caf50');
-                    gradient.addColorStop(0.8, '#1976d2');
-                    gradient.addColorStop(1, '#0d47a1');
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    break;
-                case 'night':
-                    // Dark with city lights
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    // Add city lights
-                    for (let i = 0; i < 1000; i++) {
-                        const brightness = Math.random();
-                        ctx.fillStyle = `rgba(255, 255, 200, ${brightness})`;
-                        ctx.beginPath();
-                        ctx.arc(
-                            Math.random() * canvas.width,
-                            Math.random() * canvas.height,
-                            Math.random() * 2,
-                            0,
-                            Math.PI * 2
-                        );
-                        ctx.fill();
+                    // Create topographic texture
+                    const topoCanvas = document.createElement('canvas');
+                    topoCanvas.width = 2048;
+                    topoCanvas.height = 1024;
+                    const topoCtx = topoCanvas.getContext('2d');
+                    
+                    // Create elevation-based gradient
+                    const topoGradient = topoCtx.createLinearGradient(0, 0, 0, topoCanvas.height);
+                    topoGradient.addColorStop(0, '#ffffff');    // Ice caps
+                    topoGradient.addColorStop(0.15, '#8d6e63'); // Mountains
+                    topoGradient.addColorStop(0.3, '#795548');  // High terrain
+                    topoGradient.addColorStop(0.5, '#4caf50');  // Lowlands
+                    topoGradient.addColorStop(0.7, '#2e7d32');  // Sea level
+                    topoGradient.addColorStop(0.85, '#1976d2'); // Shallow ocean
+                    topoGradient.addColorStop(1, '#0d47a1');    // Deep ocean
+                    
+                    topoCtx.fillStyle = topoGradient;
+                    topoCtx.fillRect(0, 0, topoCanvas.width, topoCanvas.height);
+                    
+                    // Add contour lines
+                    topoCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                    topoCtx.lineWidth = 1;
+                    for (let y = 0; y < topoCanvas.height; y += 20) {
+                        topoCtx.beginPath();
+                        topoCtx.moveTo(0, y);
+                        for (let x = 0; x < topoCanvas.width; x += 10) {
+                            topoCtx.lineTo(x, y + Math.sin(x * 0.01) * 5);
+                        }
+                        topoCtx.stroke();
                     }
+                    
+                    const topoTexture = new THREE.CanvasTexture(topoCanvas);
+                    topoTexture.needsUpdate = true;
+                    globe.material.map = topoTexture;
+                    globe.material.needsUpdate = true;
                     break;
+                    
+                case 'night':
+                    // Try to load real night lights texture, fallback to procedural
+                    textureLoader.load(
+                        'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/The_earth_at_night.jpg/2048px-The_earth_at_night.jpg',
+                        function(nightTexture) {
+                            globe.material.map = nightTexture;
+                            globe.material.needsUpdate = true;
+                        },
+                        undefined,
+                        function() {
+                            // Fallback to procedural night texture
+                            const nightCanvas = document.createElement('canvas');
+                            nightCanvas.width = 2048;
+                            nightCanvas.height = 1024;
+                            const nightCtx = nightCanvas.getContext('2d');
+                            
+                            // Dark background
+                            nightCtx.fillStyle = '#000000';
+                            nightCtx.fillRect(0, 0, nightCanvas.width, nightCanvas.height);
+                            
+                            // Add city lights clusters
+                            // Major population centers
+                            const cityRegions = [
+                                { x: 0.52, y: 0.35, size: 40 },  // Europe
+                                { x: 0.25, y: 0.32, size: 30 },  // Eastern US
+                                { x: 0.2, y: 0.35, size: 20 },   // Western US
+                                { x: 0.75, y: 0.35, size: 50 },  // East Asia
+                                { x: 0.65, y: 0.45, size: 30 },  // India
+                                { x: 0.3, y: 0.65, size: 20 },   // Brazil
+                            ];
+                            
+                            cityRegions.forEach(region => {
+                                // Create glow effect for each region
+                                const gradient = nightCtx.createRadialGradient(
+                                    nightCanvas.width * region.x,
+                                    nightCanvas.height * region.y,
+                                    0,
+                                    nightCanvas.width * region.x,
+                                    nightCanvas.height * region.y,
+                                    region.size
+                                );
+                                gradient.addColorStop(0, 'rgba(255, 255, 200, 0.8)');
+                                gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.3)');
+                                gradient.addColorStop(1, 'rgba(255, 150, 50, 0)');
+                                
+                                nightCtx.fillStyle = gradient;
+                                nightCtx.fillRect(
+                                    nightCanvas.width * region.x - region.size,
+                                    nightCanvas.height * region.y - region.size,
+                                    region.size * 2,
+                                    region.size * 2
+                                );
+                            });
+                            
+                            // Add individual city lights
+                            for (let i = 0; i < 2000; i++) {
+                                const brightness = Math.random() * 0.8 + 0.2;
+                                nightCtx.fillStyle = `rgba(255, 255, 200, ${brightness})`;
+                                nightCtx.beginPath();
+                                nightCtx.arc(
+                                    Math.random() * nightCanvas.width,
+                                    Math.random() * nightCanvas.height,
+                                    Math.random() * 2,
+                                    0,
+                                    Math.PI * 2
+                                );
+                                nightCtx.fill();
+                            }
+                            
+                            const nightTexture = new THREE.CanvasTexture(nightCanvas);
+                            nightTexture.needsUpdate = true;
+                            globe.material.map = nightTexture;
+                            globe.material.needsUpdate = true;
+                        }
+                    );
+                    break;
+                    
                 case 'clouds':
-                    // Show cloud layer prominently
+                    // Show realistic Earth with cloud layer
+                    if (globe.userData.originalTexture) {
+                        globe.material.map = globe.userData.originalTexture;
+                        globe.material.needsUpdate = true;
+                    }
                     document.getElementById('clouds').checked = true;
                     clouds.visible = true;
-                    return;
+                    break;
             }
-            
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.needsUpdate = true;
-            globe.material.map = texture;
-            globe.material.needsUpdate = true;
         }
         
         function toggleBorders(event) {
